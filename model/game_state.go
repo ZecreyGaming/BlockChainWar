@@ -193,7 +193,7 @@ func (g *Game) Update() {
 			remainX, remainY := float64(player.Vx), float64(player.Vy)
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
-				if collision := player.playerObj.Check(dx, dy, getEnemyCampTags(player.Camp)...); collision != nil {
+				if collision := player.playerObj.Check(dx, dy, getCollisionTags(player.Camp)...); collision != nil {
 					collisionObj := collision.Objects[0]
 					dx = collision.ContactWithObject(collisionObj).X()
 					dy = collision.ContactWithObject(collisionObj).Y()
@@ -329,21 +329,23 @@ func CellTagToIndex(tag string) (int, int) {
 	return x, y
 }
 
-func getEnemyCampTags(camp Camp) []string {
+func getCollisionTags(camp Camp) (retval []string) {
 	switch camp {
 	case BTC:
-		return []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
+		retval = []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
 	case ETH:
-		return []string{CampTagMap[BNB], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
+		retval = []string{CampTagMap[BNB], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
 	case BNB:
-		return []string{CampTagMap[ETH], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
+		retval = []string{CampTagMap[ETH], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
 	case AVAX:
-		return []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[BTC], CampTagMap[MATIC], CampTagMap[Empty]}
+		retval = []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[BTC], CampTagMap[MATIC], CampTagMap[Empty]}
 	case MATIC:
-		return []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[Empty]}
+		retval = []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[Empty]}
 	default:
-		return []string{CampTagMap[BTC], CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
+		retval = []string{CampTagMap[BTC], CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
 	}
+	retval = append(retval, HorizontalEdgeTag, VerticalEdgeTag, EdgeTag)
+	return
 }
 
 func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (float64, float64) {
