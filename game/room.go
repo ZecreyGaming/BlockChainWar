@@ -23,6 +23,10 @@ type Room struct {
 	game         *state.Game
 }
 
+type GameUpdate struct {
+	Data []byte `json:"data"`
+}
+
 func NewRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Room {
 	return &Room{
 		app:  app,
@@ -54,7 +58,7 @@ func (r *Room) AfterInit() {
 			select {
 			case s := <-stateChan:
 				<-ticker
-				r.app.GroupBroadcast(context.Background(), "zecrey_warrior", "room", "onUpdate", s)
+				r.app.GroupBroadcast(context.Background(), "zecrey_warrior", "room", "onUpdate", GameUpdate{Data: s})
 			case <-ctx.Done():
 				return
 			}
