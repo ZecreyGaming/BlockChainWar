@@ -59,13 +59,6 @@ func NewGame(db *db.Client) *Game {
 		}
 	}
 
-	//TODO
-	// v.AddPlayer(1231231, ETH)
-	// v.AddPlayer(1211111, BNB)
-	// v.AddPlayer(11111, BTC)
-	// v.AddPlayer(111, AVAX)
-	v.AddPlayer(222222, MATIC)
-
 	return v
 }
 
