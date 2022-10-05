@@ -14,127 +14,15 @@ import (
 )
 
 const (
-	sizeOfCellStateBits = 4
-	campMaskLeft        = byte(0xF0)
-	campMaskRight       = byte(0x0F)
-)
-
-type Camp uint8 // should convert to int4 when transfered to client
-
-const (
-	Empty Camp = iota
-	BTC
-	ETH
-	BNB
-	AVAX
-	MATIC
-
-	BTCInitialLen   = 6
-	ETHInitialLen   = 5
-	BNBInitialLen   = 4
-	AVAXInitialLen  = 3
-	MATICInitialLen = 2
-
-	EmptyTag = "Empty"
-	BTCTag   = "BTC"
-	ETHTag   = "ETH"
-	BNBTag   = "BNB"
-	AVAXTag  = "AVAX"
-	MATICTag = "MATIC"
-
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
 	VerticalEdgeTag   = "VERTICAL"
 
-	PlayerTag           = "Player"
-	defaultPlayerPixelR = 5
-
-	minCellSize = defaultPlayerPixelR
+	minCellSize = 5
 	edgeWidth   = defaultPlayerPixelR
+
+	playerInitialVelocity = 2
 )
-
-var (
-	CampTagMap = map[Camp]string{
-		Empty: EmptyTag,
-		BTC:   BTCTag,
-		ETH:   ETHTag,
-		BNB:   BNBTag,
-		AVAX:  AVAXTag,
-		MATIC: MATICTag,
-	}
-
-	CampTagMapReverse = map[string]Camp{
-		EmptyTag: Empty,
-		BTCTag:   BTC,
-		ETHTag:   ETH,
-		BNBTag:   BNB,
-		AVAXTag:  AVAX,
-		MATICTag: MATIC,
-	}
-)
-
-type Map struct {
-	Row    uint32 `json:"row"`
-	Column uint32 `json:"column"`
-
-	CellWidth  uint32 `json:"cell_width"`
-	CellHeight uint32 `json:"cell_height"`
-	LineWidth  uint32 `json:"line_width"`
-
-	Cells []Camp `json:"cells"`
-}
-
-func (m *Map) Serialize() []byte {
-	l := 20 + len(m.Cells)*sizeOfCellStateBits/8
-	res := make([]byte, l)
-	binary.LittleEndian.PutUint32(res[0:4], m.Row)
-	binary.LittleEndian.PutUint32(res[4:8], m.Column)
-	binary.LittleEndian.PutUint32(res[8:12], m.CellWidth)
-	binary.LittleEndian.PutUint32(res[12:16], m.CellHeight)
-	binary.LittleEndian.PutUint32(res[16:20], m.LineWidth)
-	offset := 20
-	for i := 0; i < len(m.Cells); i += 2 {
-		n := byte(m.Cells[i]<<4) & campMaskLeft
-		if i+1 < len(m.Cells) {
-			n = n | (byte(m.Cells[i+1]) & campMaskRight)
-		}
-		res[offset] = n
-		offset++
-	}
-	return res
-}
-
-func (m *Map) Size() uint32 {
-	return uint32(20 + len(m.Cells)*sizeOfCellStateBits/8)
-}
-
-type Player struct {
-	PlayerID uint64  `json:"player_id"`
-	Camp     Camp    `json:"camp"`
-	X        float64 `json:"px"`
-	Y        float64 `json:"py"`
-
-	R uint8 `json:"r"`
-
-	Vx float64 `json:"vx"`
-	Vy float64 `json:"vy"`
-
-	playerObj *resolv.Object
-}
-
-func (p *Player) Serialize() []byte {
-	b := make([]byte, 18)
-	binary.LittleEndian.PutUint64(b[0:8], p.PlayerID)
-	b[8] = byte(p.Camp)
-	b[9] = byte(p.R)
-	binary.LittleEndian.PutUint32(b[10:14], uint32(p.X))
-	binary.LittleEndian.PutUint32(b[14:18], uint32(p.Y))
-	return b
-}
-
-func (p *Player) Size() uint32 {
-	return 18
-}
 
 type Game struct {
 	Map     Map      `json:"map"`
@@ -184,13 +72,8 @@ func (g *Game) Serialize() ([]byte, error) {
 
 func (g *Game) Update() {
 	g.Players.Range(func(key, value interface{}) bool {
-		if player, ok := value.(*Player); ok && player != nil {
-			if player.playerObj == nil {
-				player.playerObj = resolv.NewObject(player.X-float64(player.R), player.Y-float64(player.R), float64(2*player.R), float64(2*player.R), PlayerTag)
-				player.playerObj.SetShape(resolv.NewCircle(float64(player.R), float64(player.R), float64(player.R)))
-				g.space.Add(player.playerObj)
-			}
-			remainX, remainY := float64(player.Vx), float64(player.Vy)
+		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
+			remainX, remainY := player.Vx, player.Vy
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
 				if collision := player.playerObj.Check(dx, dy, getCollisionTags(player.Camp)...); collision != nil {
@@ -206,13 +89,13 @@ func (g *Game) Update() {
 						collisionObj.RemoveTags(removeCampTags(collisionObj.Tags())...)
 						collisionObj.AddTags(CampTagMap[player.Camp])
 					} else if collisionObj.HasTags(HorizontalEdgeTag) {
-						player.Vx = -player.Vx
-						remainX = dx - remainX
-						remainY -= dy
-					} else {
 						player.Vy = -player.Vy
 						remainX -= dx
 						remainY = dy - remainY
+					} else {
+						player.Vx = -player.Vx
+						remainX = dx - remainX
+						remainY -= dy
 					}
 				} else {
 					remainX -= dx
@@ -222,8 +105,6 @@ func (g *Game) Update() {
 				player.playerObj.X += dx
 				player.playerObj.Y += dy
 				player.playerObj.Update()
-				player.X += dx
-				player.Y += dy
 			}
 
 			g.Players.Store(key, player)
@@ -243,6 +124,27 @@ func (g *Game) Size() uint32 {
 	return 4 + 4 + g.Map.Size() + pLen
 }
 
+func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
+	x, y := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
+	x *= int(g.Map.CellWidth)                              // pixel index
+	y *= int(g.Map.CellHeight)
+	// ang := rand.Float64() * 2 * math.Pi
+	player := &Player{
+		ID:   playerID,
+		Camp: camp,
+		R:    defaultPlayerPixelR,
+		// Vx:   math.Cos(ang) * playerInitialVelocity,
+		// Vy:   math.Sin(ang) * playerInitialVelocity,
+		Vx: 50,
+		Vy: 0,
+	}
+	player.playerObj = resolv.NewObject(float64(x-player.R+edgeWidth), float64(y-player.R+edgeWidth), float64(2*player.R), float64(2*player.R), PlayerTag)
+	player.playerObj.SetShape(resolv.NewCircle(float64(player.R), float64(player.R), float64(player.R)))
+	g.space.Add(player.playerObj)
+	g.Players.Store(playerID, player)
+	return player
+}
+
 func NewGame() *Game {
 	v := &Game{
 		Map: Map{
@@ -256,15 +158,7 @@ func NewGame() *Game {
 		Players: sync.Map{},
 	}
 	//TODO
-	v.Players.Store("test_player", &Player{
-		PlayerID: 1,
-		Camp:     ETH,
-		X:        edgeWidth + defaultPlayerPixelR,
-		Y:        edgeWidth + defaultPlayerPixelR + 10,
-		R:        defaultPlayerPixelR,
-		Vx:       0,
-		Vy:       -5,
-	})
+	v.AddPlayer(1231231, ETH)
 
 	v.space = resolv.NewSpace(int(v.Map.Column*v.Map.CellWidth)+2*edgeWidth, int(v.Map.Row*v.Map.CellHeight)+2*edgeWidth, minCellSize, minCellSize)
 	v.space.Add(resolv.NewObject(0, 0, float64(v.Map.Column*v.Map.CellWidth+edgeWidth), edgeWidth, EdgeTag, HorizontalEdgeTag))
@@ -275,35 +169,12 @@ func NewGame() *Game {
 	for i := 0; i < int(v.Map.Row); i++ {
 		for j := 0; j < int(v.Map.Column); j++ {
 			camp := initCamp(i, j, int(v.Map.Row), int(v.Map.Column))
-			v.space.Add(resolv.NewObject(float64(j*int(v.Map.CellWidth)), float64(i*int(v.Map.CellHeight)), float64(v.Map.CellWidth), float64(v.Map.CellHeight), CampTagMap[camp], CellIndexToTag(i, j)))
+			v.space.Add(resolv.NewObject(float64(j*int(v.Map.CellWidth+edgeWidth)), float64(i*int(v.Map.CellHeight+edgeWidth)), float64(v.Map.CellWidth), float64(v.Map.CellHeight), CampTagMap[camp], CellIndexToTag(i, j)))
 			v.Map.Cells = append(v.Map.Cells, camp)
 		}
 	}
 
 	return v
-}
-
-func initCamp(i, j, r, c int) Camp {
-	if i >= 0 && i < ETHInitialLen && j >= 0 && j < ETHInitialLen {
-		return ETH
-	}
-
-	if i >= 0 && i < BNBInitialLen && j < c && j >= c-BNBInitialLen {
-		return BNB
-	}
-
-	if i >= (r-BTCInitialLen)/2 && i < (r+BTCInitialLen)/2 && j >= (c-BTCInitialLen)/2 && j < (c+BTCInitialLen)/2 {
-		return BTC
-	}
-
-	if i >= r-AVAXInitialLen && i < r && j >= 0 && j < AVAXInitialLen {
-		return AVAX
-	}
-
-	if i >= r-MATICInitialLen && i < r && j >= c-MATICInitialLen && j < c {
-		return MATIC
-	}
-	return Empty
 }
 
 func GetCellIndex(tags []string) (int, int) {
@@ -327,25 +198,6 @@ func CellTagToIndex(tag string) (int, int) {
 	y, _ := strconv.Atoi(s[0])
 	x, _ := strconv.Atoi(s[1])
 	return x, y
-}
-
-func getCollisionTags(camp Camp) (retval []string) {
-	switch camp {
-	case BTC:
-		retval = []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
-	case ETH:
-		retval = []string{CampTagMap[BNB], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
-	case BNB:
-		retval = []string{CampTagMap[ETH], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
-	case AVAX:
-		retval = []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[BTC], CampTagMap[MATIC], CampTagMap[Empty]}
-	case MATIC:
-		retval = []string{CampTagMap[ETH], CampTagMap[BNB], CampTagMap[BTC], CampTagMap[AVAX], CampTagMap[Empty]}
-	default:
-		retval = []string{CampTagMap[BTC], CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
-	}
-	retval = append(retval, HorizontalEdgeTag, VerticalEdgeTag, EdgeTag)
-	return
 }
 
 func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (float64, float64) {
@@ -372,14 +224,4 @@ func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (floa
 	player.Vx, player.Vy = v/float64(player.R)*(nx-cell.X), v/float64(player.R)*(ny-cell.Y)
 
 	return l / float64(player.R) * (nx - cell.X), l / float64(player.R) * (ny - cell.Y)
-}
-
-func removeCampTags(tags []string) []string {
-	ret := []string{}
-	for _, tag := range tags {
-		if _, ok := CampTagMapReverse[tag]; ok {
-			ret = append(ret, tag)
-		}
-	}
-	return ret
 }
