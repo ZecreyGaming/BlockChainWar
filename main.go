@@ -116,7 +116,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 
 // Message sync last message to all members
 func (r *Room) Message(ctx context.Context, msg *UserMessage) {
-	// fmt.Println("Message: ", msg)
+	fmt.Println("Message: ", msg)
 	err := r.app.GroupBroadcast(ctx, "zecrey_warrior", "room", "onMessage", msg)
 	if err != nil {
 		fmt.Println("error broadcasting message", err)

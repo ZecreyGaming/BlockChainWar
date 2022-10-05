@@ -105,19 +105,19 @@ func (g *Game) Update() {
 	g.Players.Range(func(key, value interface{}) bool {
 		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
 			remainX, remainY := player.Vx, player.Vy
-			// fmt.Println("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
+			fmt.Println("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 			// if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.GetMapWidth()-edgeWidth || player.playerObj.Y > g.Map.GetMapHeight()-edgeWidth {
 			// 	panic(fmt.Sprintln("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
 			// }
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
-				// fmt.Println("dx", dx, "dy", dy)
+				fmt.Println("dx", dx, "dy", dy)
 				if collision := player.playerObj.Check(dx, dy, getCollisionTags(player.Camp)...); collision != nil {
-					// fmt.Println("##collision", collision)
+					fmt.Println("##collision", collision)
 					collisionObj := collision.Objects[0]
 					dx = collision.ContactWithObject(collisionObj).X()
 					dy = collision.ContactWithObject(collisionObj).Y()
-					// fmt.Println("collision dx", dx, "collision dy", dy)
+					fmt.Println("collision dx", dx, "collision dy", dy)
 					if !collisionObj.HasTags(EdgeTag) {
 						remainX, remainY = player.rebound(dx, dy, remainX, remainY, collisionObj)
 						x, y := GetCellIndex(collisionObj.Tags())
@@ -137,7 +137,7 @@ func (g *Game) Update() {
 					remainX -= dx
 					remainY -= dy
 				}
-				// fmt.Println("#inner camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "dx:", dx, "dy:", dy, "vx:", player.Vx, "vy:", player.Vy, "rx:", remainX, "ry:", remainY)
+				fmt.Println("#inner camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "dx:", dx, "dy:", dy, "vx:", player.Vx, "vy:", player.Vy, "rx:", remainX, "ry:", remainY)
 				player.playerObj.X += dx
 				player.playerObj.Y += dy
 				player.playerObj.Update()
@@ -177,7 +177,7 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
 
-	// fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
+	fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player
 }
 
