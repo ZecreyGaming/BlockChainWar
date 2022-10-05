@@ -65,6 +65,7 @@ func NewGame(db *db.Client) *Game {
 // frame number: 4 bytes
 // map size: 4 bytes
 // map: map size bytes
+// player number: 4 bytes
 // players: 17 * len(players) bytes
 func (g *Game) Serialize() ([]byte, error) {
 	atomic.AddUint32(&g.frameNumber, 1)
@@ -79,6 +80,16 @@ func (g *Game) Serialize() ([]byte, error) {
 	binary.BigEndian.PutUint32(b, g.Map.Size())
 	bytesBuf.Write(b)
 	bytesBuf.Write(g.Map.Serialize())
+
+	playerNumber := uint32(0)
+	g.Players.Range(func(key, value interface{}) bool { // O(N) call, but since players are not that many, it's fine
+		if v, ok := value.(*Player); ok && v != nil {
+			playerNumber++
+		}
+		return true
+	})
+	binary.BigEndian.PutUint32(b, playerNumber)
+	bytesBuf.Write(b)
 
 	g.Players.Range(func(key, value interface{}) bool {
 		if v, ok := value.(*Player); ok && v != nil {

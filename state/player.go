@@ -25,16 +25,16 @@ type Player struct {
 }
 
 // ID 8 byte
-// R 1 byte
-// X 4 byte
-// Y 4 byte
+// R 2 byte
+// X 8 byte
+// Y 8 byte
 func (p *Player) Serialize() []byte {
-	b := make([]byte, 17)
+	b := make([]byte, 26)
 	binary.BigEndian.PutUint64(b[0:8], p.ID)
-	b[8] = byte(p.R)
+	binary.BigEndian.PutUint16(b[8:10], uint16(p.R))
 	if p.playerObj != nil {
-		binary.BigEndian.PutUint32(b[9:13], uint32(p.playerObj.X))
-		binary.BigEndian.PutUint32(b[13:17], uint32(p.playerObj.Y))
+		binary.BigEndian.PutUint64(b[10:18], math.Float64bits(p.playerObj.X))
+		binary.BigEndian.PutUint64(b[18:26], math.Float64bits(p.playerObj.Y))
 	}
 	return b
 }
