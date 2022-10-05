@@ -56,9 +56,9 @@ func (r *Room) AfterInit() {
 		ticker := time.NewTicker(time.Duration(1000/r.cfg.FPS) * time.Millisecond).C
 		for {
 			select {
-			case s := <-stateChan:
+			case <-stateChan:
 				<-ticker
-				r.app.GroupBroadcast(context.Background(), "zecrey_warrior", "room", "onUpdate", GameUpdate{Data: s})
+				r.app.GroupBroadcast(context.Background(), "zecrey_warrior", "room", "onUpdate", GameUpdate{Data: []byte{0, 1, 2, 3, 4}})
 			case <-ctx.Done():
 				return
 			}

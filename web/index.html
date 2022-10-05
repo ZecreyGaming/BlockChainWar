@@ -41,25 +41,25 @@
     };
 
     var onUpdate = function (msg) {
-        console.log(msg)
+        console.log("onupdate", atob(msg.data))
     }
 
     var join = function (data) {
-        console.log(data);
+        console.log("join",data);
         if(data.code === 0) {
             v.messages.push({name:'system', content:data.result});
             starx.on('onMessage', onMessage)
-            starx.on
+            starx.on('onUpdate', onUpdate)
         }
     };
 
     var onNewUser = function (data) {
-        console.log(data);
+        // console.log(data);
         v.messages.push({name:'system', content:data.content});
     };
 
     var onMembers = function (data) {
-        console.log(data);
+        // console.log(data);
         v.messages.push({name:'system', content: "members: "+data.members});
     };
 

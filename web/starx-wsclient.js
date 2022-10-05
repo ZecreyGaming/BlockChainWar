@@ -474,10 +474,6 @@
       if(decode) {
         msg = decode(msg);
       }
-      console.log("###########")
-      console.log(msg)
-      console.log(msg.body)
-      console.log("###########")
       processMessage(starx, msg);
     };
   
