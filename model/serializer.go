@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // Serializer implements the serialize.Serializer interface
@@ -24,7 +23,7 @@ func (s *Serializer) Marshal(v interface{}) ([]byte, error) {
 	case *Player:
 		return v.Serialize(), nil
 	case []byte:
-		fmt.Println("bytes", v)
+		// fmt.Println("bytes", v)
 		return v, nil
 	}
 	return json.Marshal(v)

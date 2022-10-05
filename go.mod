@@ -2,7 +2,12 @@ module github.com/COAOX/zecrey_warrior
 
 go 1.19
 
-require github.com/topfreegames/pitaya/v2 v2.2.0
+require (
+	github.com/kvartborg/vector v0.0.0-20200419093813-2cba0cabb4f0
+	github.com/solarlune/resolv v0.5.1
+	github.com/topfreegames/pitaya/v2 v2.2.0
+	gorm.io/gorm v1.23.10
+)
 
 require (
 	github.com/DataDog/datadog-go v4.5.0+incompatible // indirect
@@ -22,8 +27,9 @@ require (
 	github.com/google/uuid v1.1.4 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/kvartborg/vector v0.0.0-20200419093813-2cba0cabb4f0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -38,7 +44,6 @@ require (
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/solarlune/resolv v0.5.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

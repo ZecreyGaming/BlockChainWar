@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/kvartborg/vector"
 	"github.com/solarlune/resolv"
 )
 
@@ -22,7 +23,7 @@ const (
 	minCellSize = 5
 	edgeWidth   = defaultPlayerPixelR
 
-	playerInitialVelocity = 2
+	playerInitialVelocity = 5
 )
 
 type Game struct {
@@ -40,25 +41,25 @@ func NewGame() *Game {
 		Players: sync.Map{},
 	}
 
-	v.space = resolv.NewSpace(int(v.Map.Column*v.Map.CellWidth)+2*edgeWidth, int(v.Map.Row*v.Map.CellHeight)+2*edgeWidth, minCellSize, minCellSize)
-	v.space.Add(resolv.NewObject(0, 0, float64(v.Map.Column*v.Map.CellWidth+edgeWidth), edgeWidth, EdgeTag, HorizontalEdgeTag))
-	v.space.Add(resolv.NewObject(0, 0, edgeWidth, float64(v.Map.Column*v.Map.CellWidth+edgeWidth), EdgeTag, VerticalEdgeTag))
-	v.space.Add(resolv.NewObject(float64(v.Map.Column*v.Map.CellWidth+edgeWidth), 0, edgeWidth, float64(v.Map.Row*v.Map.CellHeight+edgeWidth), EdgeTag, VerticalEdgeTag))
-	v.space.Add(resolv.NewObject(0, float64(v.Map.Row*v.Map.CellHeight+edgeWidth), float64(v.Map.Column*v.Map.CellWidth+edgeWidth), edgeWidth, EdgeTag, HorizontalEdgeTag))
+	v.space = resolv.NewSpace(int(v.Map.W())+2*edgeWidth, int(v.Map.H())+2*edgeWidth, minCellSize, minCellSize)
+	v.space.Add(resolv.NewObject(0, 0, v.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
+	v.space.Add(resolv.NewObject(0, edgeWidth, edgeWidth, v.Map.W()+edgeWidth, EdgeTag, VerticalEdgeTag))
+	v.space.Add(resolv.NewObject(v.Map.W()+edgeWidth, 0, edgeWidth, v.Map.H()+edgeWidth, EdgeTag, VerticalEdgeTag))
+	v.space.Add(resolv.NewObject(edgeWidth, v.Map.H()+edgeWidth, v.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
 
 	for i := 0; i < int(v.Map.Row); i++ {
 		for j := 0; j < int(v.Map.Column); j++ {
 			camp := initCamp(i, j, int(v.Map.Row), int(v.Map.Column))
-			v.space.Add(resolv.NewObject(float64(j*int(v.Map.CellWidth+edgeWidth)), float64(i*int(v.Map.CellHeight+edgeWidth)), float64(v.Map.CellWidth), float64(v.Map.CellHeight), CampTagMap[camp], CellIndexToTag(j, i)))
+			v.space.Add(resolv.NewObject(float64(j*int(v.Map.CellWidth)+edgeWidth), float64(i*int(v.Map.CellHeight)+edgeWidth), float64(v.Map.CellWidth), float64(v.Map.CellHeight), CampTagMap[camp], CellIndexToTag(j, i)))
 			v.Map.Cells = append(v.Map.Cells, camp)
 		}
 	}
 
 	//TODO
-	v.AddPlayer(1231231, ETH)
-	v.AddPlayer(1211111, BNB)
-	v.AddPlayer(11111, BTC)
-	v.AddPlayer(111, AVAX)
+	// v.AddPlayer(1231231, ETH)
+	// v.AddPlayer(1211111, BNB)
+	// v.AddPlayer(11111, BTC)
+	// v.AddPlayer(111, AVAX)
 	v.AddPlayer(222222, MATIC)
 
 	return v
@@ -95,8 +96,8 @@ func (g *Game) Serialize() ([]byte, error) {
 	})
 
 	// by, _ := json.Marshal(g)
-	// fmt.Println("game", string(by))
-	// fmt.Println("cells", g.Map.Cells)
+	// // fmt.Println("game", string(by))
+	// // fmt.Println("cells", g.Map.Cells)
 
 	return bytesBuf.Bytes(), nil
 }
@@ -105,19 +106,18 @@ func (g *Game) Update() {
 	g.Players.Range(func(key, value interface{}) bool {
 		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
 			remainX, remainY := player.Vx, player.Vy
-			fmt.Println("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
-			// if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.GetMapWidth()-edgeWidth || player.playerObj.Y > g.Map.GetMapHeight()-edgeWidth {
-			// 	panic(fmt.Sprintln("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
-			// }
+			// fmt.Println("camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
+			if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.W()+edgeWidth || player.playerObj.Y > g.Map.H()+edgeWidth {
+				panic(fmt.Sprintln("camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
+			}
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
-				fmt.Println("dx", dx, "dy", dy)
+				// fmt.Println("dx", dx, "dy", dy)
 				if collision := player.playerObj.Check(dx, dy, getCollisionTags(player.Camp)...); collision != nil {
-					fmt.Println("##collision", collision)
+					// fmt.Println("##collision")
 					collisionObj := collision.Objects[0]
-					dx = collision.ContactWithObject(collisionObj).X()
-					dy = collision.ContactWithObject(collisionObj).Y()
-					fmt.Println("collision dx", dx, "collision dy", dy)
+					dx, dy = resolvDxDy(dx, dy, collision.ContactWithObject(collisionObj))
+					// fmt.Println("player", player.playerObj.X, player.playerObj.Y, "remain", remainX, remainY, "collision dx", dx, "collision dy", dy, "collisionObj.x", collisionObj.X, "collisionObj.y", collisionObj.Y)
 					if !collisionObj.HasTags(EdgeTag) {
 						remainX, remainY = player.rebound(dx, dy, remainX, remainY, collisionObj)
 						x, y := GetCellIndex(collisionObj.Tags())
@@ -137,7 +137,7 @@ func (g *Game) Update() {
 					remainX -= dx
 					remainY -= dy
 				}
-				fmt.Println("#inner camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "dx:", dx, "dy:", dy, "vx:", player.Vx, "vy:", player.Vy, "rx:", remainX, "ry:", remainY)
+				// fmt.Println("#inner camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "dx:", dx, "dy:", dy, "vx:", player.Vx, "vy:", player.Vy, "rx:", remainX, "ry:", remainY)
 				player.playerObj.X += dx
 				player.playerObj.Y += dy
 				player.playerObj.Update()
@@ -177,7 +177,7 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
 
-	fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
+	// fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player
 }
 
@@ -202,4 +202,40 @@ func CellTagToIndex(tag string) (int, int) {
 	y, _ := strconv.Atoi(s[0])
 	x, _ := strconv.Atoi(s[1])
 	return x, y
+}
+
+func resolvDxDy(dx, dy float64, cvector vector.Vector) (x float64, y float64) {
+	x, y = dx, dy
+	cx, cy := cvector.X(), cvector.Y()
+	xDistance, yDistance := float64(1), float64(1)
+	if (cx < 0 && dx < cx) || (cx > 0 && dx > cx) {
+		xDistance = cx / dx
+	}
+	if cx == 0 {
+		if x == 0 {
+			xDistance = 1
+		} else {
+			xDistance = 0
+		}
+	}
+
+	if (cy < 0 && dy < cy) || (cy > 0 && dy > cy) {
+		yDistance = cy / dy
+	}
+	if cy == 0 {
+		if y == 0 {
+			yDistance = 1
+		} else {
+			yDistance = 0
+		}
+	}
+
+	if xDistance < yDistance {
+		y *= xDistance
+		x *= xDistance
+	} else {
+		x *= yDistance
+		y *= yDistance
+	}
+	return
 }

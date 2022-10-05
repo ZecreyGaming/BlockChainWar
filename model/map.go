@@ -24,11 +24,11 @@ func NewMap() Map {
 	}
 }
 
-func (m *Map) GetMapWidth() float64 {
+func (m *Map) W() float64 {
 	return float64(m.Column * m.CellWidth)
 }
 
-func (m *Map) GetMapHeight() float64 {
+func (m *Map) H() float64 {
 	return float64(m.Row * m.CellHeight)
 }
 
@@ -54,4 +54,8 @@ func (m *Map) Serialize() []byte {
 
 func (m *Map) Size() uint32 {
 	return uint32(20 + len(m.Cells)*sizeOfCellStateBits/8)
+}
+
+func (m *Map) OutofMap(x, y float64) bool {
+	return x < 0 || x > m.W() || y < 0 || y > m.H()
 }
