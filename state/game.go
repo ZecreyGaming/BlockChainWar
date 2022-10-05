@@ -69,7 +69,6 @@ func NewGame(db *db.Client) *Game {
 	return v
 }
 
-// frame size: 4 bytes
 // frame number: 4 bytes
 // map size: 4 bytes
 // map: map size bytes
