@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -48,6 +49,10 @@ func main() {
 	)
 
 	log.SetFlags(log.LstdFlags | log.Llongfile)
+
+	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
+
+	go http.ListenAndServe(":3251", nil)
 
 	app.Start()
 }

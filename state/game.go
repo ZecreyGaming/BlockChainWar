@@ -96,7 +96,7 @@ func (g *Game) Serialize() ([]byte, error) {
 
 	// by, _ := json.Marshal(g)
 	// fmt.Println("game", string(by))
-	fmt.Println(bytesBuf.Bytes()[0:4])
+	fmt.Println(bytesBuf.Bytes())
 
 	return bytesBuf.Bytes(), nil
 }

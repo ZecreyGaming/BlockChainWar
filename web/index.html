@@ -40,11 +40,16 @@
         v.messages.push(msg)
     };
 
+    var onUpdate = function (msg) {
+        console.log(msg)
+    }
+
     var join = function (data) {
         console.log(data);
         if(data.code === 0) {
             v.messages.push({name:'system', content:data.result});
             starx.on('onMessage', onMessage)
+            starx.on
         }
     };
 

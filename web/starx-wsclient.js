@@ -474,6 +474,10 @@
       if(decode) {
         msg = decode(msg);
       }
+      console.log("###########")
+      console.log(msg)
+      console.log(msg.body)
+      console.log("###########")
       processMessage(starx, msg);
     };
   
@@ -488,7 +492,6 @@
     handlers[Package.TYPE_KICK] = onKick;
   
     var processPackage = function(msgs) {
-      console.log(msgs.body)
       if(Array.isArray(msgs)) {
         for(var i=0; i<msgs.length; i++) {
           var msg = msgs[i];
