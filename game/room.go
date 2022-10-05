@@ -124,3 +124,24 @@ func (r *Room) Message(ctx context.Context, msg *UserMessage) {
 		// fmt.Println("error broadcasting message", err)
 	}
 }
+
+// TODO
+type GameInfo struct {
+	Row    uint32 `json:"row"`
+	Column uint32 `json:"column"`
+
+	CellWidth  uint32 `json:"cell_width"`
+	CellHeight uint32 `json:"cell_height"`
+
+	Players []PlayerInfo `json:"players"`
+}
+
+type PlayerInfo struct {
+	ID        string `json:"id"`
+	Thumbnail string `json:"thumbnail"`
+}
+
+type GameStop struct {
+	Winner        state.Camp `json:"winner"`
+	NextCountDown int64      `json:"next_count_down"`
+}
