@@ -13,6 +13,25 @@ type Map struct {
 	Cells []Camp `json:"cells"`
 }
 
+func NewMap() Map {
+	return Map{
+		Row:        30,
+		Column:     40,
+		Cells:      []Camp{},
+		CellWidth:  20,
+		CellHeight: 20,
+		LineWidth:  1,
+	}
+}
+
+func (m *Map) GetMapWidth() float64 {
+	return float64(m.Column * m.CellWidth)
+}
+
+func (m *Map) GetMapHeight() float64 {
+	return float64(m.Row * m.CellHeight)
+}
+
 func (m *Map) Serialize() []byte {
 	l := 20 + len(m.Cells)*sizeOfCellStateBits/8
 	res := make([]byte, l)

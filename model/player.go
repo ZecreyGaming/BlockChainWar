@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/binary"
+	"math"
 
 	"github.com/solarlune/resolv"
 )
@@ -37,4 +38,32 @@ func (p *Player) Serialize() []byte {
 
 func (p *Player) Size() uint32 {
 	return 18
+}
+
+func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (float64, float64) {
+	// Edge Collision
+	nx, ny := player.playerObj.X+dx, player.playerObj.Y+dy
+	rx -= dx
+	ry -= dy
+	if nx >= cell.X && nx <= cell.X+cell.W {
+		player.Vy = -player.Vy
+		return rx, -ry
+	}
+	if ny >= cell.Y && ny <= cell.Y+cell.H {
+		player.Vx = -player.Vx
+		return -rx, ry
+	}
+
+	// Corner Collision
+	remianV := math.Sqrt(rx*rx + ry*ry)
+	if remianV == 0 {
+		return 0, 0
+	}
+
+	v := math.Sqrt(player.Vx*player.Vx + player.Vy*player.Vy)
+	player.Vx, player.Vy = v/float64(player.R)*(nx-cell.X), v/float64(player.R)*(ny-cell.Y)
+
+	px, py := (nx - cell.X), (ny - cell.Y)
+	pl := math.Sqrt(px*px + py*py)
+	return remianV / pl * px, remianV / pl * py
 }
