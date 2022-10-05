@@ -1,7 +1,5 @@
 package state
 
-import "encoding/binary"
-
 type Map struct {
 	Row    uint32 `json:"row"`
 	Column uint32 `json:"column"`
@@ -33,14 +31,9 @@ func (m *Map) H() float64 {
 }
 
 func (m *Map) Serialize() []byte {
-	l := 20 + len(m.Cells)*sizeOfCellStateBits/8
+	l := len(m.Cells) * sizeOfCellStateBits / 8
 	res := make([]byte, l)
-	binary.BigEndian.PutUint32(res[0:4], m.Row)
-	binary.BigEndian.PutUint32(res[4:8], m.Column)
-	binary.BigEndian.PutUint32(res[8:12], m.CellWidth)
-	binary.BigEndian.PutUint32(res[12:16], m.CellHeight)
-	binary.BigEndian.PutUint32(res[16:20], m.LineWidth)
-	offset := 20
+	offset := 0
 	for i := 0; i < len(m.Cells); i += 2 {
 		n := byte(m.Cells[i]<<4) & campMaskLeft
 		if i+1 < len(m.Cells) {
@@ -53,7 +46,7 @@ func (m *Map) Serialize() []byte {
 }
 
 func (m *Map) Size() uint32 {
-	return uint32(20 + len(m.Cells)*sizeOfCellStateBits/8)
+	return uint32(len(m.Cells) * sizeOfCellStateBits / 8)
 }
 
 func (m *Map) OutofMap(x, y float64) bool {
