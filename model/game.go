@@ -106,9 +106,9 @@ func (g *Game) Update() {
 		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
 			remainX, remainY := player.Vx, player.Vy
 			fmt.Println("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
-			if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.GetMapWidth()-edgeWidth || player.playerObj.Y > g.Map.GetMapHeight()-edgeWidth {
-				panic(fmt.Sprintln("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
-			}
+			// if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.GetMapWidth()-edgeWidth || player.playerObj.Y > g.Map.GetMapHeight()-edgeWidth {
+			// 	panic(fmt.Sprintln("camp:", player.Camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
+			// }
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
 				fmt.Println("dx", dx, "dy", dy)
