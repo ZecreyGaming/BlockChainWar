@@ -72,7 +72,8 @@ func (r *Room) AfterInit() {
 		}
 	}()
 	go func() {
-		ticker := time.Tick(time.Duration(1) * time.Second)
+		// ticker := time.Tick(time.Duration(33) * time.Millisecond)
+		ticker := time.Tick(time.Second)
 		for {
 			select {
 			case s := <-stateChan:
