@@ -1,4 +1,4 @@
-package model
+package state
 
 import (
 	"encoding/binary"
@@ -24,14 +24,17 @@ type Player struct {
 	playerObj *resolv.Object
 }
 
+// ID 8 byte
+// R 1 byte
+// X 4 byte
+// Y 4 byte
 func (p *Player) Serialize() []byte {
-	b := make([]byte, 18)
-	binary.LittleEndian.PutUint64(b[0:8], p.ID)
-	b[8] = byte(p.Camp)
-	b[9] = byte(p.R)
+	b := make([]byte, 17)
+	binary.BigEndian.PutUint64(b[0:8], p.ID)
+	b[8] = byte(p.R)
 	if p.playerObj != nil {
-		binary.LittleEndian.PutUint32(b[10:14], uint32(p.playerObj.X))
-		binary.LittleEndian.PutUint32(b[14:18], uint32(p.playerObj.Y))
+		binary.BigEndian.PutUint32(b[9:13], uint32(p.playerObj.X))
+		binary.BigEndian.PutUint32(b[13:17], uint32(p.playerObj.Y))
 	}
 	return b
 }

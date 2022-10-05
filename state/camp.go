@@ -1,4 +1,4 @@
-package model
+package state
 
 const (
 	sizeOfCellStateBits = 4

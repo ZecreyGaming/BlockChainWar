@@ -1,4 +1,4 @@
-package model
+package state
 
 import "encoding/binary"
 
@@ -35,11 +35,11 @@ func (m *Map) H() float64 {
 func (m *Map) Serialize() []byte {
 	l := 20 + len(m.Cells)*sizeOfCellStateBits/8
 	res := make([]byte, l)
-	binary.LittleEndian.PutUint32(res[0:4], m.Row)
-	binary.LittleEndian.PutUint32(res[4:8], m.Column)
-	binary.LittleEndian.PutUint32(res[8:12], m.CellWidth)
-	binary.LittleEndian.PutUint32(res[12:16], m.CellHeight)
-	binary.LittleEndian.PutUint32(res[16:20], m.LineWidth)
+	binary.BigEndian.PutUint32(res[0:4], m.Row)
+	binary.BigEndian.PutUint32(res[4:8], m.Column)
+	binary.BigEndian.PutUint32(res[8:12], m.CellWidth)
+	binary.BigEndian.PutUint32(res[12:16], m.CellHeight)
+	binary.BigEndian.PutUint32(res[16:20], m.LineWidth)
 	offset := 20
 	for i := 0; i < len(m.Cells); i += 2 {
 		n := byte(m.Cells[i]<<4) & campMaskLeft

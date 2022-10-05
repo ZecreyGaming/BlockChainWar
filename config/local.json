@@ -1,0 +1,10 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "root",
+        "password": "public",
+        "database": "zecrey_warrior"
+    },
+    "fps": 1
+}

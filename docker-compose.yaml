@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:13.4-alpine3.14
+    hostname: zecrey-warrior-postgres
+    container_name: zecrey-warrior-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=public
+      - POSTGRES_DB=zecrey_warrior
+      - POSTGRES_USER=root
+    restart: unless-stopped

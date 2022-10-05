@@ -1,4 +1,4 @@
-package model
+package state
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/COAOX/zecrey_warrior/db"
 	"github.com/kvartborg/vector"
 	"github.com/solarlune/resolv"
 )
@@ -27,6 +28,8 @@ const (
 )
 
 type Game struct {
+	db *db.Client
+
 	Map     Map      `json:"map"`
 	Players sync.Map `json:"players"`
 
@@ -35,8 +38,9 @@ type Game struct {
 	frameNumber uint32
 }
 
-func NewGame() *Game {
+func NewGame(db *db.Client) *Game {
 	v := &Game{
+		db:      db,
 		Map:     NewMap(),
 		Players: sync.Map{},
 	}
@@ -65,26 +69,22 @@ func NewGame() *Game {
 	return v
 }
 
+// frame size: 4 bytes
 // frame number: 4 bytes
 // map size: 4 bytes
 // map: map size bytes
-// players: 18 * len(players) bytes
+// players: 17 * len(players) bytes
 func (g *Game) Serialize() ([]byte, error) {
 	atomic.AddUint32(&g.frameNumber, 1)
 	bytesBuf := bytes.NewBuffer([]byte{})
 	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, g.Size())
+	binary.BigEndian.PutUint32(b, g.frameNumber)
 	_, err := bytesBuf.Write(b)
 	if err != nil {
 		return bytesBuf.Bytes(), err
 	}
-	binary.LittleEndian.PutUint32(b, g.frameNumber)
-	_, err = bytesBuf.Write(b)
-	if err != nil {
-		return bytesBuf.Bytes(), err
-	}
 
-	binary.LittleEndian.PutUint32(b, g.Map.Size())
+	binary.BigEndian.PutUint32(b, g.Map.Size())
 	bytesBuf.Write(b)
 	bytesBuf.Write(g.Map.Serialize())
 
@@ -96,8 +96,8 @@ func (g *Game) Serialize() ([]byte, error) {
 	})
 
 	// by, _ := json.Marshal(g)
-	// // fmt.Println("game", string(by))
-	// // fmt.Println("cells", g.Map.Cells)
+	// fmt.Println("game", string(by))
+	fmt.Println(bytesBuf.Bytes()[0:4])
 
 	return bytesBuf.Bytes(), nil
 }
