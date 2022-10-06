@@ -19,6 +19,7 @@ const (
 
 type Room struct {
 	component.Base
+	ctx context.Context
 	app pitaya.Pitaya
 	cfg *config.Config
 	db  *db.Client
@@ -41,8 +42,9 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 		db:  db,
 		cfg: cfg,
 	}
-	r.game = NewGame(db, func(winner Camp) {
-		r.onGameStop(context.Background(), winner)
+	r.ctx, r.tickerCancel = context.WithCancel(context.Background())
+	r.game = NewGame(r.ctx, cfg, db, func(winner Camp) {
+		r.onGameStop(r.ctx, winner)
 	})
 	app.Register(r,
 		component.WithName(gameRoomName),
@@ -52,19 +54,19 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 }
 
 func (r *Room) AfterInit() {
-	ctx, cancel := context.WithCancel(context.Background())
-	r.tickerCancel = cancel
-	stateChan := r.game.Start(ctx, cancel)
+	stateChan := r.game.Start()
 	go func() {
 		// ticker := time.Tick(time.Duration(33) * time.Millisecond)
 		ticker := time.NewTicker(time.Duration(1000/r.cfg.FPS) * time.Millisecond).C
 		for {
 			select {
+			case nextRoundChan := <-r.game.stopSignalChan:
+				<-nextRoundChan
 			case s := <-stateChan:
 				<-ticker
 				fmt.Println(s)
 				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, gameRoomName, "onUpdate", GameUpdate{Data: s})
-			case <-ctx.Done():
+			case <-r.ctx.Done():
 				return
 			}
 		}
@@ -94,6 +96,10 @@ type NewUser struct {
 
 // Join room
 func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
+	if r.game == nil || r.game.GameStatus != GameRunning {
+		return nil, pitaya.Error(fmt.Errorf("GAME_NOT_START"), "GAME_NOT_START", map[string]string{"failed": "game not start"})
+	}
+
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid

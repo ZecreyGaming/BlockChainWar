@@ -11,10 +11,15 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
+	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/COAOX/zecrey_warrior/model"
 	"github.com/kvartborg/vector"
 	"github.com/solarlune/resolv"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type GameStatus int
@@ -35,41 +40,37 @@ const (
 )
 
 type Game struct {
-	db *db.Client
+	pctx context.Context
+	db   *db.Client
+	cfg  *config.Config
 
-	Map     Map      `json:"map"`
-	Players sync.Map `json:"players"`
-
-	space *resolv.Space
-
+	space       *resolv.Space
 	frameNumber uint32
 
+	ID         uint
+	ctx        context.Context
+	Map        Map      `json:"map"`
+	Players    sync.Map `json:"players"`
 	GameStatus GameStatus
 	onGameStop func(winner Camp)
+
+	stopSignalChan chan chan struct{}
 }
 
-func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop func(winner Camp)) *Game {
 	v := &Game{
-		db:         db,
-		Map:        NewMap(),
-		Players:    sync.Map{},
-		onGameStop: onGameStop,
-		GameStatus: GameNotStarted,
+		ctx:            ctx,
+		db:             db,
+		cfg:            cfg,
+		Map:            NewMap(),
+		Players:        sync.Map{},
+		onGameStop:     onGameStop,
+		GameStatus:     GameNotStarted,
+		stopSignalChan: make(chan chan struct{}, 1),
 	}
 
-	v.space = resolv.NewSpace(int(v.Map.W())+2*edgeWidth, int(v.Map.H())+2*edgeWidth, minCellSize, minCellSize)
-	v.space.Add(resolv.NewObject(0, 0, v.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
-	v.space.Add(resolv.NewObject(0, edgeWidth, edgeWidth, v.Map.W()+edgeWidth, EdgeTag, VerticalEdgeTag))
-	v.space.Add(resolv.NewObject(v.Map.W()+edgeWidth, 0, edgeWidth, v.Map.H()+edgeWidth, EdgeTag, VerticalEdgeTag))
-	v.space.Add(resolv.NewObject(edgeWidth, v.Map.H()+edgeWidth, v.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
-
-	for i := 0; i < int(v.Map.Row); i++ {
-		for j := 0; j < int(v.Map.Column); j++ {
-			camp := initCamp(i, j, int(v.Map.Row), int(v.Map.Column))
-			v.space.Add(resolv.NewObject(float64(j*int(v.Map.CellWidth)+edgeWidth), float64(i*int(v.Map.CellHeight)+edgeWidth), float64(v.Map.CellWidth), float64(v.Map.CellHeight), CampTagMap[camp], CellIndexToTag(j, i)))
-			v.Map.Cells = append(v.Map.Cells, camp)
-		}
-	}
+	v.initSpace()
+	v.initGameID()
 
 	v.AddPlayer(11111, ETH)
 	v.AddPlayer(22222, BNB)
@@ -80,7 +81,31 @@ func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
 	return v
 }
 
-func (g *Game) Start(ctx context.Context, onEnd func()) <-chan []byte {
+func (g *Game) initSpace() {
+	g.space = resolv.NewSpace(int(g.Map.W())+2*edgeWidth, int(g.Map.H())+2*edgeWidth, minCellSize, minCellSize)
+	g.space.Add(resolv.NewObject(0, 0, g.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
+	g.space.Add(resolv.NewObject(0, edgeWidth, edgeWidth, g.Map.W()+edgeWidth, EdgeTag, VerticalEdgeTag))
+	g.space.Add(resolv.NewObject(g.Map.W()+edgeWidth, 0, edgeWidth, g.Map.H()+edgeWidth, EdgeTag, VerticalEdgeTag))
+	g.space.Add(resolv.NewObject(edgeWidth, g.Map.H()+edgeWidth, g.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
+
+	for i := 0; i < int(g.Map.Row); i++ {
+		for j := 0; j < int(g.Map.Column); j++ {
+			camp := initCamp(i, j, int(g.Map.Row), int(g.Map.Column))
+			g.space.Add(resolv.NewObject(float64(j*int(g.Map.CellWidth)+edgeWidth), float64(i*int(g.Map.CellHeight)+edgeWidth), float64(g.Map.CellWidth), float64(g.Map.CellHeight), CampTagMap[camp], CellIndexToTag(j, i)))
+			g.Map.Cells = append(g.Map.Cells, camp)
+		}
+	}
+}
+
+func (g *Game) initGameID() {
+	dbGame := &model.Game{StartTime: time.Now()}
+	if err := g.db.Game.Create(dbGame); err != nil {
+		zap.L().Error("failed to create game", zap.Error(err))
+	}
+	g.ID = dbGame.ID
+}
+
+func (g *Game) Start() <-chan []byte {
 	g.GameStatus = GameRunning
 	stateChan := make(chan []byte)
 	go func() {
@@ -88,13 +113,27 @@ func (g *Game) Start(ctx context.Context, onEnd func()) <-chan []byte {
 			s, _ := g.Serialize()
 			g.Update()
 			select {
-			case <-ctx.Done():
+			case <-g.ctx.Done():
 				return
 			case stateChan <- s:
 			}
 		}
 	}()
 	return stateChan
+}
+
+func (g *Game) Stop() {
+	winner := g.GetWinner()
+	g.Save(winner)
+	g.onGameStop(g.GetWinner())
+	g.GameStatus = GameStopped
+	nextRoundChan := make(chan struct{}, 1)
+	g.stopSignalChan <- nextRoundChan
+	// wait game to start
+	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
+	g.Reset()
+	nextRoundChan <- struct{}{}
+
 }
 
 // frame number: 4 bytes
@@ -142,6 +181,27 @@ func (g *Game) Serialize() ([]byte, error) {
 	// fmt.Println(bytesBuf.Bytes())
 
 	return bytesBuf.Bytes(), nil
+}
+
+func (g *Game) Save(winner Camp) {
+	campID := uint8(winner)
+	if err := g.db.Game.Update(&model.Game{Model: gorm.Model{ID: g.ID}, EndTime: time.Now(), WinnerID: campID}); err != nil {
+		zap.L().Error("failed to update game", zap.Error(err))
+	}
+	if err := g.db.Camp.IncreaseScore(campID); err != nil {
+		zap.L().Error("failed to increase camp score", zap.Error(err))
+	}
+}
+
+func (g *Game) GetWinner() Camp {
+	return BTC
+}
+
+func (g *Game) Reset() {
+	g.Players = sync.Map{}
+	g.Map = NewMap()
+	g.initSpace()
+	g.initGameID()
 }
 
 func (g *Game) Update() {

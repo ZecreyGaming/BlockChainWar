@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
@@ -47,8 +48,10 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, game *game
 
 // JoinResponse represents the result of joining room
 type JoinResponse struct {
-	Code   int    `json:"code"`
-	Result string `json:"result"`
+	Code        int       `json:"code"`
+	Result      string    `json:"result"`
+	GameRound   uint      `json:"game_round"`
+	GameEndTime time.Time `json:"game_end_time"`
 }
 
 // UserMessage represents a message that user sent
@@ -72,7 +75,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
 
-	offset, limit := 0, 30
+	offset, limit := 0, 100
 	// get last 30 messages
 	messages, err := r.db.Message.ListLatest(offset, limit)
 	if err != nil {
@@ -94,7 +97,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 		r.app.GroupRemoveMember(ctx, chatRoomName, s.UID())
 	})
 
-	return &JoinResponse{Result: "success"}, nil
+	return &JoinResponse{Result: "success", GameRound: r.game.ID}, nil
 }
 
 // Message sync last message to all members

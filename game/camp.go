@@ -1,6 +1,8 @@
 package game
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	sizeOfCellStateBits = 4
