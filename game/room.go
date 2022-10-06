@@ -31,7 +31,7 @@ type GameUpdate struct {
 	Data []byte `json:"data"`
 }
 
-func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) {
+func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 	err := app.GroupCreate(context.Background(), gameRoomName)
 	if err != nil {
 		panic(err)
@@ -48,6 +48,7 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) {
 		component.WithName(gameRoomName),
 		component.WithNameFunc(strings.ToLower),
 	)
+	return r.game
 }
 
 func (r *Room) AfterInit() {

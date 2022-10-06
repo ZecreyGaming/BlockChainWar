@@ -35,8 +35,8 @@ func main() {
 	database := db.NewClient(cfg.Database)
 
 	// register game and chat
-	game.RegistRoom(app, database, cfg)
-	chat.RegistRoom(app, database, cfg)
+	g := game.RegistRoom(app, database, cfg)
+	chat.RegistRoom(app, database, cfg, g)
 
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 

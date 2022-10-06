@@ -77,9 +77,9 @@ func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
 	return v
 }
 
-func (g *Game) Start() {
-	g.GameStatus = GameRunning
-}
+// func (g *Game) Start(ctx context.Context) <-chan []byte {
+// 	g.GameStatus = GameRunning
+// }
 
 // frame number: 4 bytes
 // map size: 4 bytes
