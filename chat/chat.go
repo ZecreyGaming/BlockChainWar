@@ -27,16 +27,17 @@ type Room struct {
 	game *game.Game
 }
 
-func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) {
+func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, game *game.Game) {
 	err := app.GroupCreate(context.Background(), chatRoomName)
 	if err != nil {
 		panic(err)
 	}
 
 	app.Register(&Room{
-		app: app,
-		db:  db,
-		cfg: cfg,
+		app:  app,
+		db:   db,
+		cfg:  cfg,
+		game: game,
 	},
 		component.WithName(chatRoomName),
 		component.WithNameFunc(strings.ToLower),

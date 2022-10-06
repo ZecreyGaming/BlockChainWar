@@ -51,6 +51,7 @@ func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
 		Map:        NewMap(),
 		Players:    sync.Map{},
 		onGameStop: onGameStop,
+		GameStatus: GameNotStarted,
 	}
 
 	v.space = resolv.NewSpace(int(v.Map.W())+2*edgeWidth, int(v.Map.H())+2*edgeWidth, minCellSize, minCellSize)
@@ -74,6 +75,10 @@ func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
 	v.AddPlayer(55555, MATIC)
 
 	return v
+}
+
+func (g *Game) Start() {
+	g.GameStatus = GameRunning
 }
 
 // frame number: 4 bytes
@@ -177,10 +182,14 @@ func (g *Game) Size() uint32 {
 }
 
 func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
+	if g.GameStatus != GameRunning {
+		return nil
+	}
 	x, y := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
 	x *= int(g.Map.CellWidth)                              // pixel index
 	y *= int(g.Map.CellHeight)
 
+	x, y = 10, 10
 	// ang := rand.Float64() * 2 * math.Pi
 	player := &Player{
 		ID:   playerID,
@@ -189,7 +198,7 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 		// Vx:   math.Cos(ang) * playerInitialVelocity,
 		// Vy:   math.Sin(ang) * playerInitialVelocity,
 	}
-	player.playerObj = resolv.NewObject(float64(x-player.R+edgeWidth), float64(y-player.R+edgeWidth), float64(2*player.R), float64(2*player.R), PlayerTag)
+	player.playerObj = resolv.NewObject(float64(x-player.R+edgeWidth)+0.5, float64(y-player.R+edgeWidth)+0.5, float64(2*player.R), float64(2*player.R), PlayerTag)
 	player.playerObj.SetShape(resolv.NewCircle(float64(player.R), float64(player.R), float64(player.R)))
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
