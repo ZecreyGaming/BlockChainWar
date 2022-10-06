@@ -6,4 +6,4 @@ set -v
 export ENV="local"
 
 # run service
-go run .. --config=../config/server.json
+nohup go run .. --config=../config/server.json > ../log/out &
