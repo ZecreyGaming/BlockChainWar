@@ -1,52 +1,42 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/COAOX/zecrey_warrior/chat"
 	cfg "github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
 	"github.com/COAOX/zecrey_warrior/game"
-	"github.com/COAOX/zecrey_warrior/state"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/acceptor"
-	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/groups"
 )
 
 var (
-	configPath = flag.String("config", "/etc/appconf/configs.json", "Path to config file")
+	configPath = flag.String("config", "./config/local.json", "Path to config file")
 )
 
 func main() {
 	flag.Parse()
 	cfg := cfg.Read(*configPath)
 
-	builder := pitaya.NewDefaultBuilder(true, "zecrey_warrior", pitaya.Standalone, map[string]string{}, configApp())
+	builder := pitaya.NewDefaultBuilder(true, cfg.FrontendType, pitaya.Standalone, map[string]string{}, configApp())
 	builder.AddAcceptor(acceptor.NewWSAcceptor(":3250"))
 	builder.Groups = groups.NewMemoryGroupService(*config.NewDefaultMemoryGroupConfig())
-	builder.Serializer = state.NewSerializer()
+	builder.Serializer = game.NewSerializer()
 	app := builder.Build()
 
 	defer app.Shutdown()
 
-	err := app.GroupCreate(context.Background(), "room")
-	if err != nil {
-		panic(err)
-	}
-
 	database := db.NewClient(cfg.Database)
-	// rewrite component and handler name
-	room := game.NewRoom(app, database, cfg)
-	app.Register(room,
-		component.WithName("room"),
-		component.WithNameFunc(strings.ToLower),
-	)
+
+	// register game and chat
+	game.RegistRoom(app, database, cfg)
+	chat.RegistRoom(app, database, cfg)
 
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 

@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
-	"github.com/COAOX/zecrey_warrior/state"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
+)
+
+const (
+	gameRoomName = "game"
 )
 
 type Room struct {
@@ -20,20 +24,30 @@ type Room struct {
 	db  *db.Client
 
 	tickerCancel context.CancelFunc
-	game         *state.Game
+	game         *Game
 }
 
 type GameUpdate struct {
 	Data []byte `json:"data"`
 }
 
-func NewRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Room {
-	return &Room{
-		app:  app,
-		game: state.NewGame(db),
-		db:   db,
-		cfg:  cfg,
+func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) {
+	err := app.GroupCreate(context.Background(), gameRoomName)
+	if err != nil {
+		panic(err)
 	}
+	r := &Room{
+		app: app,
+		db:  db,
+		cfg: cfg,
+	}
+	r.game = NewGame(db, func(winner Camp) {
+		r.onGameStop(context.Background(), winner)
+	})
+	app.Register(r,
+		component.WithName(gameRoomName),
+		component.WithNameFunc(strings.ToLower),
+	)
 }
 
 func (r *Room) AfterInit() {
@@ -59,7 +73,7 @@ func (r *Room) AfterInit() {
 			case s := <-stateChan:
 				<-ticker
 				fmt.Println(s)
-				r.app.GroupBroadcast(context.Background(), "zecrey_warrior", "room", "onUpdate", GameUpdate{Data: s})
+				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, gameRoomName, "onUpdate", GameUpdate{Data: s})
 			case <-ctx.Done():
 				return
 			}
@@ -98,19 +112,21 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
 
-	uids, err := r.app.GroupMembers(ctx, "room")
-	if err != nil {
-		return nil, err
-	}
-	s.Push("onMembers", &AllMembers{Members: uids})
-	// notify others
-	r.app.GroupBroadcast(ctx, "zecrey_warrior", "room", "onNewUser", &NewUser{Content: fmt.Sprintf("New user: %s", s.UID())})
+	// uids, err := r.app.GroupMembers(ctx, gameRoomName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// s.Push("onMembers", &AllMembers{Members: uids})
+
 	// new user join group
-	r.app.GroupAddMember(ctx, "room", s.UID()) // add session to group
+	r.app.GroupAddMember(ctx, gameRoomName, s.UID()) // add session to group
+
+	// notify others
+	r.onJoin(ctx)
 
 	// on session close, remove it from group
 	s.OnClose(func() {
-		r.app.GroupRemoveMember(ctx, "room", s.UID())
+		r.app.GroupRemoveMember(ctx, gameRoomName, s.UID())
 	})
 
 	return &JoinResponse{Result: "success"}, nil
@@ -119,10 +135,38 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 // Message sync last message to all members
 func (r *Room) Message(ctx context.Context, msg *UserMessage) {
 	// fmt.Println("Message: ", msg)
-	err := r.app.GroupBroadcast(ctx, "zecrey_warrior", "room", "onMessage", msg)
+	err := r.app.GroupBroadcast(ctx, r.cfg.FrontendType, gameRoomName, "onMessage", msg)
 	if err != nil {
 		// fmt.Println("error broadcasting message", err)
 	}
+}
+
+func (r *Room) onJoin(ctx context.Context) {
+	gi := GameInfo{
+		Row:        r.game.Map.Row,
+		Column:     r.game.Map.Column,
+		CellWidth:  r.game.Map.CellWidth,
+		CellHeight: r.game.Map.CellHeight,
+	}
+	r.game.Players.Range(func(key, value interface{}) bool {
+		if p, ok := value.(*Player); ok {
+			gi.Players = append(gi.Players, PlayerInfo{
+				ID:        p.ID,
+				Thumbnail: p.Thumbnail,
+			})
+		}
+		return true
+	})
+
+	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, gameRoomName, "onJoin", gi)
+}
+
+func (r *Room) onGameStop(ctx context.Context, winer Camp) {
+	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, gameRoomName, "onGameStop", GameStop{
+		Winner:        winer,
+		NextCountDown: int64(r.cfg.GameRoundInterval),
+	})
+	r.app.GroupRemoveAll(ctx, gameRoomName)
 }
 
 // TODO
@@ -137,11 +181,11 @@ type GameInfo struct {
 }
 
 type PlayerInfo struct {
-	ID        string `json:"id"`
+	ID        uint64 `json:"id"`
 	Thumbnail string `json:"thumbnail"`
 }
 
 type GameStop struct {
-	Winner        state.Camp `json:"winner"`
-	NextCountDown int64      `json:"next_count_down"`
+	Winner        Camp  `json:"winner"`
+	NextCountDown int64 `json:"next_count_down"`
 }

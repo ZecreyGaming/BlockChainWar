@@ -1,4 +1,4 @@
-package state
+package game
 
 const (
 	sizeOfCellStateBits = 4

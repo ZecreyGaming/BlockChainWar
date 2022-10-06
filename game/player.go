@@ -1,4 +1,4 @@
-package state
+package game
 
 import (
 	"encoding/binary"
@@ -13,8 +13,9 @@ const (
 )
 
 type Player struct {
-	ID   uint64 `json:"player_id"`
-	Camp Camp   `json:"camp"`
+	ID        uint64 `json:"player_id"`
+	Camp      Camp   `json:"camp"`
+	Thumbnail string `json:"thumbnail"`
 
 	R int `json:"r"`
 

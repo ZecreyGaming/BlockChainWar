@@ -8,8 +8,10 @@ import (
 )
 
 type Config struct {
-	Database db.Config `json:"database"`
-	FPS      int       `json:"fps"`
+	Database          db.Config `json:"database"`
+	FPS               int       `json:"fps"`
+	GameRoundInterval int       `json:"game_round_interval"`
+	FrontendType      string    `json:"frontend_type"`
 }
 
 func Read(configPath string) *Config {

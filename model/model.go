@@ -35,8 +35,6 @@ type Game struct {
 type Message struct {
 	gorm.Model
 	Message  string `json:"message"`
-	GameID   uint   `json:"game_id"`
-	Game     Game   `json:"game"`
 	PlayerID uint64 `json:"player_id"`
 	Player   Player `gorm:"foreignKey:PlayerID,references:PlayerID" json:"player"`
 }
