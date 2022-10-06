@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"strconv"
@@ -77,9 +78,22 @@ func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
 	return v
 }
 
-// func (g *Game) Start(ctx context.Context) <-chan []byte {
-// 	g.GameStatus = GameRunning
-// }
+func (g *Game) Start(ctx context.Context) <-chan []byte {
+	g.GameStatus = GameRunning
+	stateChan := make(chan []byte)
+	go func() {
+		for {
+			s, _ := g.Serialize()
+			g.Update()
+			select {
+			case <-ctx.Done():
+				return
+			case stateChan <- s:
+			}
+		}
+	}()
+	return stateChan
+}
 
 // frame number: 4 bytes
 // map size: 4 bytes
