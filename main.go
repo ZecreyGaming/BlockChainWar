@@ -10,10 +10,14 @@ import (
 	cfg "github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
 	"github.com/COAOX/zecrey_warrior/game"
+	"github.com/sirupsen/logrus"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/acceptor"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/groups"
+	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/topfreegames/pitaya/v2/logger/interfaces"
+	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
 )
 
 var (
@@ -53,5 +57,18 @@ func configApp() config.BuilderConfig {
 	conf.Pitaya.Buffer.Agent.Messages = 32
 	conf.Pitaya.Handler.Messages.Compression = false
 	conf.Metrics.Prometheus.Enabled = true
+	l := initLogger()
+	logger.SetLogger(l)
 	return *conf
+}
+
+func initLogger() interfaces.Logger {
+	plog := logrus.New()
+	plog.Formatter = new(logrus.TextFormatter)
+	plog.Level = logrus.ErrorLevel
+
+	log := plog.WithFields(logrus.Fields{
+		"source": "pitaya",
+	})
+	return logruswrapper.NewWithFieldLogger(log)
 }

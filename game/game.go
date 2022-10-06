@@ -161,7 +161,6 @@ func (g *Game) Serialize() ([]byte, error) {
 		}
 		return true
 	})
-	fmt.Println("player number", playerNumber)
 	binary.BigEndian.PutUint32(b, playerNumber)
 	bytesBuf.Write(b)
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/topfreegames/pitaya/constants"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
 )
@@ -64,7 +65,6 @@ func (r *Room) AfterInit() {
 				<-nextRoundChan
 			case s := <-stateChan:
 				<-ticker
-				fmt.Println(s)
 				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, gameRoomName, "onUpdate", GameUpdate{Data: s})
 			case <-r.ctx.Done():
 				return
@@ -104,7 +104,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
 
-	if err != nil {
+	if err != nil && err != constants.ErrSessionAlreadyBound {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
 
