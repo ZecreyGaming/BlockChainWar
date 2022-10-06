@@ -7,6 +7,7 @@ import (
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/COAOX/zecrey_warrior/game"
 	"github.com/COAOX/zecrey_warrior/model"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
@@ -22,6 +23,8 @@ type Room struct {
 	app pitaya.Pitaya
 	cfg *config.Config
 	db  *db.Client
+
+	game *game.Game
 }
 
 func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) {
@@ -103,4 +106,5 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) {
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))
 	}
+
 }

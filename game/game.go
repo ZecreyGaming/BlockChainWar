@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math"
-	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,6 +14,8 @@ import (
 	"github.com/solarlune/resolv"
 )
 
+type GameStatus int
+
 const (
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
@@ -25,6 +25,10 @@ const (
 	edgeWidth   = defaultPlayerPixelR
 
 	playerInitialVelocity = 5
+
+	GameNotStarted GameStatus = iota
+	GameRunning
+	GameStopped
 )
 
 type Game struct {
@@ -37,6 +41,7 @@ type Game struct {
 
 	frameNumber uint32
 
+	GameStatus GameStatus
 	onGameStop func(winner Camp)
 }
 
@@ -176,13 +181,13 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	x *= int(g.Map.CellWidth)                              // pixel index
 	y *= int(g.Map.CellHeight)
 
-	ang := rand.Float64() * 2 * math.Pi
+	// ang := rand.Float64() * 2 * math.Pi
 	player := &Player{
 		ID:   playerID,
 		Camp: camp,
 		R:    defaultPlayerPixelR,
-		Vx:   math.Cos(ang) * playerInitialVelocity,
-		Vy:   math.Sin(ang) * playerInitialVelocity,
+		// Vx:   math.Cos(ang) * playerInitialVelocity,
+		// Vy:   math.Sin(ang) * playerInitialVelocity,
 	}
 	player.playerObj = resolv.NewObject(float64(x-player.R+edgeWidth), float64(y-player.R+edgeWidth), float64(2*player.R), float64(2*player.R), PlayerTag)
 	player.playerObj.SetShape(resolv.NewCircle(float64(player.R), float64(player.R), float64(player.R)))
