@@ -2,14 +2,15 @@ package chat
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/COAOX/zecrey_warrior/model"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
+	"go.uber.org/zap"
 )
 
 const (
@@ -72,7 +73,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	if err != nil {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "get messages"})
 	}
-	s.Push("onMessageSync", messages)
+	s.Push("onHistoryMessage", messages)
 
 	// uids, err := r.app.GroupMembers(ctx, gameRoomName)
 	// if err != nil {
@@ -92,10 +93,14 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 }
 
 // Message sync last message to all members
-func (r *Room) Message(ctx context.Context, msg *UserMessage) {
+func (r *Room) Message(ctx context.Context, msg *model.Message) {
 	// fmt.Println("Message: ", msg)
 	err := r.app.GroupBroadcast(ctx, r.cfg.FrontendType, chatRoomName, "onMessage", msg)
 	if err != nil {
-		fmt.Println("error broadcasting message", err)
+		zap.L().Error("broadcast message failed", zap.Error(err))
+	}
+	err = r.db.Message.Create(msg)
+	if err != nil {
+		zap.L().Error("save message failed", zap.Error(err))
 	}
 }

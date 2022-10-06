@@ -1,6 +1,7 @@
 package game
 
 import (
+	"bytes"
 	"encoding/binary"
 	"math"
 
@@ -31,12 +32,15 @@ type Player struct {
 // Y 8 byte
 func (p *Player) Serialize() []byte {
 	b := make([]byte, 26)
-	binary.BigEndian.PutUint64(b[0:8], p.ID)
-	binary.BigEndian.PutUint16(b[8:10], uint16(p.R))
+	bytesBuffer := bytes.NewBuffer(b)
+	binary.Write(bytesBuffer, binary.BigEndian, p.ID)
+	binary.Write(bytesBuffer, binary.BigEndian, uint16(p.R))
+	x, y := float64(0), float64(0)
 	if p.playerObj != nil {
-		binary.BigEndian.PutUint64(b[10:18], math.Float64bits(p.playerObj.X))
-		binary.BigEndian.PutUint64(b[18:26], math.Float64bits(p.playerObj.Y))
+		x, y = p.playerObj.X, p.playerObj.Y
 	}
+	binary.Write(bytesBuffer, binary.BigEndian, x)
+	binary.Write(bytesBuffer, binary.BigEndian, y)
 	return b
 }
 
