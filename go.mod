@@ -3,9 +3,11 @@ module github.com/COAOX/zecrey_warrior
 go 1.19
 
 require (
+	github.com/google/uuid v1.1.4
 	github.com/kvartborg/vector v0.0.0-20200419093813-2cba0cabb4f0
 	github.com/solarlune/resolv v0.5.1
 	github.com/topfreegames/pitaya/v2 v2.2.0
+	go.uber.org/zap v1.17.0
 	gorm.io/gorm v1.23.10
 )
 
@@ -24,7 +26,6 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.1.4 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -57,7 +58,6 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.0-alpha.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
-	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
 	golang.org/x/sys v0.0.0-20220111092808-5a964db01320 // indirect

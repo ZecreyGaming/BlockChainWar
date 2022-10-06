@@ -54,7 +54,7 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 func (r *Room) AfterInit() {
 	ctx, cancel := context.WithCancel(context.Background())
 	r.tickerCancel = cancel
-	stateChan := r.game.Start(ctx)
+	stateChan := r.game.Start(ctx, cancel)
 	go func() {
 		// ticker := time.Tick(time.Duration(33) * time.Millisecond)
 		ticker := time.NewTicker(time.Duration(1000/r.cfg.FPS) * time.Millisecond).C

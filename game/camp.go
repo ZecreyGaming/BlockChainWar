@@ -1,5 +1,7 @@
 package game
 
+import "strings"
+
 const (
 	sizeOfCellStateBits = 4
 	campMaskLeft        = byte(0xF0)
@@ -118,4 +120,13 @@ func (c Camp) Center(row, col int) (x int, y int) {
 		x, y = row/2, col/2
 	}
 	return
+}
+
+func DecideCamp(msg string) Camp {
+	for _, tag := range CampTagMap {
+		if strings.Contains(msg, tag) {
+			return CampTagMapReverse[tag]
+		}
+	}
+	return Empty
 }

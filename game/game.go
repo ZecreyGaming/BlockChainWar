@@ -78,7 +78,7 @@ func NewGame(db *db.Client, onGameStop func(winner Camp)) *Game {
 	return v
 }
 
-func (g *Game) Start(ctx context.Context) <-chan []byte {
+func (g *Game) Start(ctx context.Context, onEnd func()) <-chan []byte {
 	g.GameStatus = GameRunning
 	stateChan := make(chan []byte)
 	go func() {
@@ -99,7 +99,7 @@ func (g *Game) Start(ctx context.Context) <-chan []byte {
 // map size: 4 bytes
 // map: map size bytes
 // player number: 4 bytes
-// players: 17 * len(players) bytes
+// players: 26 * len(players) bytes
 func (g *Game) Serialize() ([]byte, error) {
 	atomic.AddUint32(&g.frameNumber, 1)
 	bytesBuf := bytes.NewBuffer([]byte{})
@@ -125,12 +125,15 @@ func (g *Game) Serialize() ([]byte, error) {
 	binary.BigEndian.PutUint32(b, playerNumber)
 	bytesBuf.Write(b)
 
+	// debugBuf := bytes.NewBuffer(make([]byte, 100))
 	g.Players.Range(func(key, value interface{}) bool {
 		if v, ok := value.(*Player); ok && v != nil {
 			bytesBuf.Write(v.Serialize())
+			// debugBuf.Write(v.Serialize())
 		}
 		return true
 	})
+	// fmt.Printf("player bytes, %08b\n", debugBuf.Bytes())
 
 	// by, _ := json.Marshal(g)
 	// fmt.Println("game", string(by))
