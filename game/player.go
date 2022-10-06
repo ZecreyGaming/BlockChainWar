@@ -31,8 +31,7 @@ type Player struct {
 // X 8 byte
 // Y 8 byte
 func (p *Player) Serialize() []byte {
-	b := make([]byte, 26)
-	bytesBuffer := bytes.NewBuffer(b)
+	bytesBuffer := bytes.NewBuffer(make([]byte, 26))
 	binary.Write(bytesBuffer, binary.BigEndian, p.ID)
 	binary.Write(bytesBuffer, binary.BigEndian, uint16(p.R))
 	x, y := float64(0), float64(0)
@@ -41,7 +40,7 @@ func (p *Player) Serialize() []byte {
 	}
 	binary.Write(bytesBuffer, binary.BigEndian, x)
 	binary.Write(bytesBuffer, binary.BigEndian, y)
-	return b
+	return bytesBuffer.Bytes()
 }
 
 func (p *Player) Size() uint32 {
