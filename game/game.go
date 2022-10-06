@@ -121,6 +121,7 @@ func (g *Game) Serialize() ([]byte, error) {
 		}
 		return true
 	})
+	fmt.Println("player number", playerNumber)
 	binary.BigEndian.PutUint32(b, playerNumber)
 	bytesBuf.Write(b)
 
@@ -196,9 +197,9 @@ func (g *Game) Size() uint32 {
 }
 
 func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
-	if g.GameStatus != GameRunning {
-		return nil
-	}
+	// if g.GameStatus != GameRunning {
+	// 	return nil
+	// }
 	x, y := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
 	x *= int(g.Map.CellWidth)                              // pixel index
 	y *= int(g.Map.CellHeight)
