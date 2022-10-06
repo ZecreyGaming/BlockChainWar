@@ -32,7 +32,7 @@ const (
 	minCellSize = 5
 	edgeWidth   = defaultPlayerPixelR
 
-	playerInitialVelocity = 5
+	playerInitialVelocity = 1
 
 	GameNotStarted GameStatus = iota
 	GameRunning
@@ -40,9 +40,8 @@ const (
 )
 
 type Game struct {
-	pctx context.Context
-	db   *db.Client
-	cfg  *config.Config
+	db  *db.Client
+	cfg *config.Config
 
 	space       *resolv.Space
 	frameNumber uint32
@@ -268,6 +267,8 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	x, y := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
 	x *= int(g.Map.CellWidth)                              // pixel index
 	y *= int(g.Map.CellHeight)
+	x += edgeWidth
+	y += edgeWidth
 
 	ang := rand.Float64() * 2 * math.Pi
 	player := &Player{
@@ -277,7 +278,7 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 		Vx:   math.Cos(ang) * playerInitialVelocity,
 		Vy:   math.Sin(ang) * playerInitialVelocity,
 	}
-	player.playerObj = resolv.NewObject(float64(x-player.R+edgeWidth), float64(y-player.R+edgeWidth), float64(2*player.R), float64(2*player.R), PlayerTag)
+	player.playerObj = resolv.NewObject(float64(x-player.R), float64(y-player.R), float64(2*player.R), float64(2*player.R), PlayerTag)
 	player.playerObj.SetShape(resolv.NewCircle(float64(player.R), float64(player.R), float64(player.R)))
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)

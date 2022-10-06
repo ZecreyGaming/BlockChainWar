@@ -11,6 +11,7 @@ import (
 	"github.com/COAOX/zecrey_warrior/game"
 	"github.com/COAOX/zecrey_warrior/model"
 	"github.com/google/uuid"
+	"github.com/topfreegames/pitaya/constants"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
 	"go.uber.org/zap"
@@ -71,7 +72,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
 
-	if err != nil {
+	if err != nil && err != constants.ErrSessionAlreadyBound {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
 

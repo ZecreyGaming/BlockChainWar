@@ -106,22 +106,21 @@ func initCamp(i, j, r, c int) Camp {
 	return Empty
 }
 
-func (c Camp) Center(row, col int) (x int, y int) {
-	x, y = row/2, col/2
+func (c Camp) Center(row, col int) (int, int) {
 	switch c {
 	case ETH:
-		x, y = ETHInitialLen/2, ETHInitialLen/2
+		return col - 2, row - 2
 	case BNB:
-		x, y = col-BNBInitialLen/2, BNBInitialLen/2
+		return col / 2, 2
 	case AVAX:
-		x, y = AVAXInitialLen/2, row-AVAXInitialLen/2
+		return 2, 2
 	case MATIC:
-		x, y = col-MATICInitialLen/2, row-MATICInitialLen/2
-	default:
+		return col - 2, 2
 	case BTC:
-		x, y = row/2, col/2
+		return 2, row - 2
+	default:
+		return col / 2, row / 2
 	}
-	return
 }
 
 func DecideCamp(msg string) Camp {

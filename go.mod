@@ -6,6 +6,7 @@ require (
 	github.com/google/uuid v1.1.4
 	github.com/kvartborg/vector v0.0.0-20200419093813-2cba0cabb4f0
 	github.com/solarlune/resolv v0.5.1
+	github.com/topfreegames/pitaya v1.1.10
 	github.com/topfreegames/pitaya/v2 v2.2.0
 	go.uber.org/zap v1.17.0
 	gorm.io/driver/postgres v1.3.10
@@ -39,7 +40,6 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect

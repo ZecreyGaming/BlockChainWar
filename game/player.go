@@ -10,7 +10,7 @@ import (
 
 const (
 	PlayerTag           = "Player"
-	defaultPlayerPixelR = minCellSize
+	defaultPlayerPixelR = 15
 )
 
 type Player struct {

@@ -1,10 +1,5 @@
 package game
 
-import (
-	"encoding/hex"
-	"fmt"
-)
-
 type Map struct {
 	Row    uint32 `json:"row"`
 	Column uint32 `json:"column"`
@@ -47,7 +42,6 @@ func (m *Map) Serialize() []byte {
 		res[offset] = n
 		offset++
 	}
-	fmt.Println("map serialize:", hex.EncodeToString(res))
 	return res
 }
 
