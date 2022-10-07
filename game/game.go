@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"math"
+	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -257,13 +259,13 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	// }
 	x, y := cellIndexToSpaceXY(camp.CenterCellIndex(mapRow, mapColumn))
 
-	// ang := rand.Float64() * 2 * math.Pi
+	ang := rand.Float64() * 2 * math.Pi
 	player := &Player{
 		ID:   playerID,
 		Camp: camp,
 		R:    defaultPlayerPixelR,
-		// Vx:   math.Cos(ang) * playerInitialVelocity,
-		// Vy:   math.Sin(ang) * playerInitialVelocity,
+		Vx:   math.Cos(ang) * playerInitialVelocity,
+		Vy:   math.Sin(ang) * playerInitialVelocity,
 	}
 	player.playerObj = resolv.NewObject(x, y, float64(2*player.R), float64(2*player.R), PlayerTag)
 	g.space.Add(player.playerObj)
