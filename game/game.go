@@ -24,7 +24,7 @@ import (
 type GameStatus int
 
 const (
-	gameDuration = 5 * time.Minute
+	gameDuration = 3 * time.Second
 
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
