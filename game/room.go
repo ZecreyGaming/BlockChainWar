@@ -142,7 +142,7 @@ func (r *Room) onGameStop(winer Camp) {
 }
 
 func (r *Room) onCampVotesChange(camp Camp, votes int32) {
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onCampVotesChange", CampVotesChange{
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onCampVotesChange", CampVotesChange{
 		Camp:  camp,
 		Votes: votes,
 	})
