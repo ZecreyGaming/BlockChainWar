@@ -24,6 +24,8 @@ import (
 type GameStatus int
 
 const (
+	gameDuration = 1 * time.Minute
+
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
 	VerticalEdgeTag   = "VERTICAL"
@@ -39,31 +41,37 @@ const (
 )
 
 type Game struct {
-	db  *db.Client
-	cfg *config.Config
+	db                *db.Client
+	cfg               *config.Config
+	onGameStop        func(winner Camp)
+	onCampVotesChange func(camp Camp, votes int32)
 
 	space       *resolv.Space
 	frameNumber uint32
+	campVotes   sync.Map
 
-	gameInfo   *model.Game
+	dbGame     *model.Game
 	ctx        context.Context
 	Map        Map      `json:"map"`
 	Players    sync.Map `json:"players"`
 	GameStatus GameStatus
-	onGameStop func(winner Camp)
 
+	nextRoundChan  chan struct{}
 	stopSignalChan chan chan struct{}
 }
 
-func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop func(winner Camp)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop func(winner Camp), onCampVotesChange func(camp Camp, votes int32)) *Game {
 	v := &Game{
-		ctx:            ctx,
-		db:             db,
-		cfg:            cfg,
-		Players:        sync.Map{},
-		onGameStop:     onGameStop,
-		GameStatus:     GameNotStarted,
-		stopSignalChan: make(chan chan struct{}, 1),
+		ctx:               ctx,
+		db:                db,
+		cfg:               cfg,
+		campVotes:         sync.Map{},
+		Players:           sync.Map{},
+		onGameStop:        onGameStop,
+		onCampVotesChange: onCampVotesChange,
+		GameStatus:        GameNotStarted,
+		stopSignalChan:    make(chan chan struct{}, 1),
+		nextRoundChan:     make(chan struct{}, 1),
 	}
 
 	v.initMap()
@@ -98,15 +106,20 @@ func (g *Game) initMap() {
 }
 
 func (g *Game) initGameInfo() {
-	g.gameInfo = &model.Game{StartTime: time.Now(), EndTime: time.Now().Add(10 * time.Minute)}
-	if err := g.db.Game.Create(g.gameInfo); err != nil {
+	g.dbGame = &model.Game{StartTime: time.Now(), EndTime: time.Now().Add(gameDuration)}
+	if err := g.db.Game.Create(g.dbGame); err != nil {
 		zap.L().Error("failed to create game", zap.Error(err))
 	}
 }
 
-func (g *Game) Start() <-chan []byte {
+func (g *Game) GetGameID() uint {
+	return g.dbGame.ID
+}
+
+func (g *Game) start() <-chan []byte {
 	g.GameStatus = GameRunning
 	stateChan := make(chan []byte)
+	ticker := time.NewTicker(gameDuration)
 	go func() {
 		for {
 			s, _ := g.Serialize()
@@ -114,25 +127,26 @@ func (g *Game) Start() <-chan []byte {
 			select {
 			case <-g.ctx.Done():
 				return
-			case stateChan <- s:
+			case <-ticker.C:
+				g.nextRound()
+			default:
+				stateChan <- s
 			}
 		}
 	}()
 	return stateChan
 }
 
-func (g *Game) Stop() {
+func (g *Game) nextRound() {
 	winner := g.GetWinner()
 	g.Save(winner)
-	g.onGameStop(g.GetWinner())
 	g.GameStatus = GameStopped
-	nextRoundChan := make(chan struct{}, 1)
-	g.stopSignalChan <- nextRoundChan
+	g.stopSignalChan <- g.nextRoundChan
+	g.onGameStop(g.GetWinner())
 	// wait game to start
 	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
 	g.Reset()
-	nextRoundChan <- struct{}{}
-
+	g.nextRoundChan <- struct{}{}
 }
 
 // frame number: 4 bytes
@@ -176,22 +190,33 @@ func (g *Game) Serialize() ([]byte, error) {
 
 func (g *Game) Save(winner Camp) {
 	campID := uint8(winner)
-	g.gameInfo.WinnerID = campID
-	g.gameInfo.EndTime = time.Now()
-	if err := g.db.Game.Update(g.gameInfo); err != nil {
+	g.dbGame.WinnerID = campID
+	g.dbGame.EndTime = time.Now()
+	if err := g.db.Game.Update(g.dbGame); err != nil {
 		zap.L().Error("failed to update game", zap.Error(err))
 	}
 	if err := g.db.Camp.IncreaseScore(campID); err != nil {
 		zap.L().Error("failed to increase camp score", zap.Error(err))
 	}
+	if err := g.db.Player.IncreaseScore(g.dbGame.ID, campID); err != nil {
+		zap.L().Error("failed to increase player score", zap.Error(err))
+	}
 }
 
 func (g *Game) GetWinner() Camp {
-	return BTC
-}
-
-func (g *Game) GetGameInfo() *model.Game {
-	return g.gameInfo
+	score := make(map[Camp]int)
+	for _, v := range g.Map.Cells {
+		score[v]++
+	}
+	maxScore := 0
+	winner := BTC
+	for k, v := range score {
+		if v > maxScore {
+			maxScore = v
+			winner = k
+		}
+	}
+	return winner
 }
 
 func (g *Game) Reset() {
@@ -201,6 +226,9 @@ func (g *Game) Reset() {
 }
 
 func (g *Game) Update() {
+	if g.GameStatus != GameRunning {
+		return
+	}
 	g.Players.Range(func(key, value interface{}) bool {
 		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
 			remainX, remainY := player.Vx, player.Vy
@@ -266,10 +294,10 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	// if g.GameStatus != GameRunning {
 	// 	return nil
 	// }
-	fmt.Println("on add player")
 	if camp == Empty {
 		return nil
 	}
+	g.incrCampVotes(camp)
 	x, y := cellIndexToSpaceXY(camp.CenterCellIndex(mapRow, mapColumn))
 
 	ang := rand.Float64() * 2 * math.Pi
@@ -286,6 +314,17 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 
 	// fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player
+}
+
+func (g *Game) incrCampVotes(camp Camp) {
+	votes := int32(0)
+	v, _ := g.campVotes.LoadOrStore(camp, &votes)
+	i, ok := v.(*int32)
+	if !ok {
+		g.campVotes.Store(camp, &votes)
+	}
+	n := atomic.AddInt32(i, 1)
+	g.onCampVotesChange(camp, n)
 }
 
 func GetCellIndex(tags []string) (int, int) {

@@ -14,10 +14,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/component"
 )
 
-const (
-	gameRoomName = "game"
-)
-
 type Room struct {
 	component.Base
 	ctx context.Context
@@ -34,7 +30,7 @@ type GameUpdate struct {
 }
 
 func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
-	err := app.GroupCreate(context.Background(), gameRoomName)
+	err := app.GroupCreate(context.Background(), config.GameRoomName)
 	if err != nil {
 		panic(err)
 	}
@@ -44,18 +40,16 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 		cfg: cfg,
 	}
 	r.ctx, r.tickerCancel = context.WithCancel(context.Background())
-	r.game = NewGame(r.ctx, cfg, db, func(winner Camp) {
-		r.onGameStop(r.ctx, winner)
-	})
+	r.game = NewGame(r.ctx, cfg, db, r.onGameStop, r.onCampVotesChange)
 	app.Register(r,
-		component.WithName(gameRoomName),
+		component.WithName(config.GameRoomName),
 		component.WithNameFunc(strings.ToLower),
 	)
 	return r.game
 }
 
 func (r *Room) AfterInit() {
-	stateChan := r.game.Start()
+	stateChan := r.game.start()
 	go func() {
 		// ticker := time.Tick(time.Duration(33) * time.Millisecond)
 		ticker := time.NewTicker(time.Duration(1000/r.cfg.FPS) * time.Millisecond).C
@@ -63,11 +57,12 @@ func (r *Room) AfterInit() {
 			select {
 			case nextRoundChan := <-r.game.stopSignalChan:
 				<-nextRoundChan
-			case s := <-stateChan:
-				<-ticker
-				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, gameRoomName, "onUpdate", GameUpdate{Data: s})
 			case <-r.ctx.Done():
 				return
+			default:
+				s := <-stateChan
+				<-ticker
+				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, config.GameRoomName, "onUpdate", GameUpdate{Data: s})
 			}
 		}
 	}()
@@ -102,28 +97,28 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
 
-	// uids, err := r.app.GroupMembers(ctx, gameRoomName)
+	// uids, err := r.app.GroupMembers(ctx, config.GameRoomName)
 	// if err != nil {
 	// 	return nil, err
 	// }
 	// s.Push("onMembers", &AllMembers{Members: uids})
 
 	// new user join group
-	r.app.GroupAddMember(ctx, gameRoomName, s.UID()) // add session to group
+	r.app.GroupAddMember(ctx, config.GameRoomName, s.UID()) // add session to group
 
 	// notify others
 	r.onJoin(ctx)
 
 	// on session close, remove it from group
 	s.OnClose(func() {
-		r.app.GroupRemoveMember(ctx, gameRoomName, s.UID())
+		r.app.GroupRemoveMember(ctx, config.GameRoomName, s.UID())
 	})
 
 	return &JoinResponse{Result: "success"}, nil
 }
 
 func (r *Room) onJoin(ctx context.Context) {
-	gi := GameInfo{
+	mi := MapInfo{
 		Row:        mapRow,
 		Column:     mapColumn,
 		CellWidth:  cellWidth,
@@ -131,27 +126,31 @@ func (r *Room) onJoin(ctx context.Context) {
 	}
 	r.game.Players.Range(func(key, value interface{}) bool {
 		if p, ok := value.(*Player); ok {
-			gi.Players = append(gi.Players, PlayerInfo{
+			mi.Players = append(mi.Players, PlayerInfo{
 				ID:        p.ID,
 				Thumbnail: p.Thumbnail,
 			})
 		}
 		return true
 	})
-
-	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, gameRoomName, "onJoin", gi)
+	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
 }
 
-func (r *Room) onGameStop(ctx context.Context, winer Camp) {
-	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, gameRoomName, "onGameStop", GameStop{
-		Winner:        winer,
-		NextCountDown: int64(r.cfg.GameRoundInterval),
+func (r *Room) onGameStop(winer Camp) {
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", r.game.GetGameStop())
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", r.game.GetGameStop())
+	r.app.GroupRemoveAll(r.ctx, config.GameRoomName)
+}
+
+func (r *Room) onCampVotesChange(camp Camp, votes int32) {
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onCampVotesChange", CampVotesChange{
+		Camp:  camp,
+		Votes: votes,
 	})
-	r.app.GroupRemoveAll(ctx, gameRoomName)
 }
 
 // TODO
-type GameInfo struct {
+type MapInfo struct {
 	Row    uint32 `json:"row"`
 	Column uint32 `json:"column"`
 
@@ -166,7 +165,7 @@ type PlayerInfo struct {
 	Thumbnail string `json:"thumbnail"`
 }
 
-type GameStop struct {
-	Winner        Camp  `json:"winner"`
-	NextCountDown int64 `json:"next_count_down"`
+type CampVotesChange struct {
+	Camp  Camp  `json:"camp"`
+	Votes int32 `json:"votes"`
 }

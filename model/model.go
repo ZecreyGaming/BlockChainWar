@@ -15,6 +15,12 @@ type Player struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+type PlayerVote struct {
+	GameID   uint   `gorm:"primarykey;autoIncrement:false" json:"game_id"`
+	PlayerID uint64 `gorm:"primarykey;autoIncrement:false" json:"player_id"`
+	Camp     uint8  `gorm:"index" json:"camp"`
+}
+
 type Camp struct {
 	ID        uint8 `gorm:"primarykey"`
 	CreatedAt time.Time

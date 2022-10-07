@@ -7,6 +7,11 @@ import (
 	"github.com/COAOX/zecrey_warrior/db"
 )
 
+const (
+	ChatRoomName = "chat"
+	GameRoomName = "game"
+)
+
 type Config struct {
 	Database          db.Config `json:"database"`
 	FPS               int       `json:"fps"`

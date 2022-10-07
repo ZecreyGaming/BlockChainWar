@@ -14,3 +14,9 @@ func (c *camp) Create(camp *model.Camp) error {
 func (c *camp) IncreaseScore(campID uint8) error {
 	return c.db.Model(&model.Camp{}).Where("id = ?", campID).Update("score", gorm.Expr("score + ?", 1)).Error
 }
+
+func (c *camp) ListRank(limit int) ([]model.Camp, error) {
+	var camps []model.Camp
+	err := c.db.Order("score desc").Limit(limit).Find(&camps).Error
+	return camps, err
+}

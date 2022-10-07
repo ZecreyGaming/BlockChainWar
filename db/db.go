@@ -38,7 +38,7 @@ func NewClient(cfg Config) *Client {
 		panic(err)
 	}
 
-	err = gdb.AutoMigrate(&model.Message{}, &model.Game{}, &model.Player{}, &model.Camp{})
+	err = gdb.AutoMigrate(&model.Message{}, &model.Game{}, &model.Player{}, &model.Camp{}, &model.PlayerVote{})
 	if err != nil {
 		panic(err)
 	}

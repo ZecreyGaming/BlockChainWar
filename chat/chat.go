@@ -2,10 +2,8 @@ package chat
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
@@ -15,10 +13,6 @@ import (
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
 	"go.uber.org/zap"
-)
-
-const (
-	chatRoomName = "chat"
 )
 
 type Room struct {
@@ -31,7 +25,7 @@ type Room struct {
 }
 
 func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, game *game.Game) {
-	err := app.GroupCreate(context.Background(), chatRoomName)
+	err := app.GroupCreate(context.Background(), config.ChatRoomName)
 	if err != nil {
 		panic(err)
 	}
@@ -42,17 +36,16 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, game *game
 		cfg:  cfg,
 		game: game,
 	},
-		component.WithName(chatRoomName),
+		component.WithName(config.ChatRoomName),
 		component.WithNameFunc(strings.ToLower),
 	)
 }
 
 // JoinResponse represents the result of joining room
 type JoinResponse struct {
-	Code        int       `json:"code"`
-	Result      string    `json:"result"`
-	GameRound   uint      `json:"game_round"`
-	GameEndTime time.Time `json:"game_end_time"`
+	Code     int           `json:"code"`
+	Result   string        `json:"result"`
+	GameInfo game.GameInfo `json:"game_info"`
 }
 
 type MessageResponse struct {
@@ -67,7 +60,6 @@ type NewUser struct {
 
 // Join room
 func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, error) {
-	fmt.Println("on chat join")
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
@@ -76,13 +68,13 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
 
-	offset, limit := 0, 100
-	// get last 30 messages
-	messages, err := r.db.Message.ListLatest(offset, limit)
-	if err != nil {
-		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "get messages"})
-	}
-	s.Push("onHistoryMessage", messages)
+	// offset, limit := 0, 100
+	// // get last 30 messages
+	// messages, err := r.db.Message.ListLatest(offset, limit)
+	// if err != nil {
+	// 	return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "get messages"})
+	// }
+	// s.Push("onHistoryMessage", messages)
 
 	if err := r.db.Player.Create(player); err != nil {
 		zap.L().Error("create player failed", zap.Error(err))
@@ -90,14 +82,19 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 	}
 
 	// new user join group
-	r.app.GroupAddMember(ctx, chatRoomName, s.UID()) // add session to group
+	r.app.GroupAddMember(ctx, config.ChatRoomName, s.UID()) // add session to group
 
 	// on session close, remove it from group
 	s.OnClose(func() {
-		r.app.GroupRemoveMember(ctx, chatRoomName, s.UID())
+		r.app.GroupRemoveMember(ctx, config.ChatRoomName, s.UID())
 	})
 
-	return &JoinResponse{Result: "success", GameRound: r.game.GetGameInfo().ID, GameEndTime: r.game.GetGameInfo().EndTime}, nil
+	info, err := r.game.GetGameInfo()
+	if err != nil {
+		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "get game info", "error": err.Error()})
+	}
+
+	return &JoinResponse{Result: "success", GameInfo: info}, nil
 }
 
 // Message sync last message to all members
@@ -114,13 +111,19 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 	}
 
 	msg.Player = p
-	err = r.app.GroupBroadcast(ctx, r.cfg.FrontendType, chatRoomName, "onMessage", msg)
+	err = r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.ChatRoomName, "onMessage", msg)
 	if err != nil {
 		zap.L().Error("broadcast message failed", zap.Error(err))
 	}
-	fmt.Println("camp", game.DecideCamp(msg.Message))
-	if r.game != nil {
-		r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
+
+	if camp := game.DecideCamp(msg.Message); camp != game.Empty && r.game != nil {
+		if err := r.db.Player.AddVote(&model.PlayerVote{
+			GameID:   r.game.GetGameID(),
+			PlayerID: msg.PlayerID,
+			Camp:     uint8(camp),
+		}); err != nil {
+			r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
+		}
 	}
 	return &MessageResponse{
 		Result: "success",
