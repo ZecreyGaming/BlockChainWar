@@ -3,7 +3,6 @@ package game
 import (
 	"bytes"
 	"encoding/binary"
-	"math"
 
 	"github.com/solarlune/resolv"
 )
@@ -52,25 +51,38 @@ func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (floa
 	nx, ny := player.playerObj.X+dx, player.playerObj.Y+dy
 	rx -= dx
 	ry -= dy
-	if nx >= cell.X && nx <= cell.X+cell.W {
-		player.Vy = -player.Vy
-		return rx, -ry
-	}
-	if ny >= cell.Y && ny <= cell.Y+cell.H {
-		player.Vx = -player.Vx
-		return -rx, ry
+	// if nx >= cell.X && nx <= cell.X+cell.W {
+	// 	player.Vy = -player.Vy
+	// 	return rx, -ry
+	// }
+	// if ny >= cell.Y && ny <= cell.Y+cell.H {
+	// 	player.Vx = -player.Vx
+	// 	return -rx, ry
+	// }
+
+	// // Corner Collision
+	// remianV := math.Sqrt(rx*rx + ry*ry)
+	// if remianV == 0 {
+	// 	return 0, 0
+	// }
+
+	// v := math.Sqrt(player.Vx*player.Vx + player.Vy*player.Vy)
+	// player.Vx, player.Vy = v/float64(player.R)*(cell.X-nx), v/float64(player.R)*(cell.Y-ny)
+
+	// px, py := (cell.X - nx), (cell.Y - ny)
+	// pl := math.Sqrt(px*px + py*py)
+	// player.Vx *= -1
+	// player.Vy *= -1
+	// return -rx, -ry
+
+	if ny <= cell.Y-float64(2*player.R) || ny >= cell.Y+cell.H {
+		player.Vy *= -1
+		ry *= -1
 	}
 
-	// Corner Collision
-	remianV := math.Sqrt(rx*rx + ry*ry)
-	if remianV == 0 {
-		return 0, 0
+	if nx <= cell.X-float64(2*player.R) || nx >= cell.X+cell.W {
+		player.Vx *= -1
+		rx *= -1
 	}
-
-	v := math.Sqrt(player.Vx*player.Vx + player.Vy*player.Vy)
-	player.Vx, player.Vy = v/float64(player.R)*(cell.X-nx), v/float64(player.R)*(cell.Y-ny)
-
-	px, py := (cell.X - nx), (cell.Y - ny)
-	pl := math.Sqrt(px*px + py*py)
-	return remianV / pl * px, remianV / pl * py
+	return rx, ry
 }

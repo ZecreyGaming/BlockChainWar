@@ -85,6 +85,7 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 	s.Push("onHistoryMessage", messages)
 
 	if err := r.db.Player.Create(player); err != nil {
+		zap.L().Error("create player failed", zap.Error(err))
 		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "create player, db issue"})
 	}
 

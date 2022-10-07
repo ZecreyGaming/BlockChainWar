@@ -62,7 +62,10 @@
         console.log("initialized");
         starx.on("onNewUser", onNewUser);
         starx.on("onMembers", onMembers);
-        starx.request("chat.join", {}, join);
+        starx.request("chat.join", {
+            player_id: 131123123123,
+            name:'test',
+        }, join);
     })
 </script>
 </body>
