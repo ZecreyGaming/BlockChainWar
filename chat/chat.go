@@ -61,12 +61,6 @@ type MessageResponse struct {
 	Result string `json:"result"`
 }
 
-// UserMessage represents a message that user sent
-type UserMessage struct {
-	PlayerID uint64 `json:"player_id"`
-	Message  string `json:"message"`
-}
-
 // NewUser message will be received when new user join room
 type NewUser struct {
 	Content string `json:"content"`

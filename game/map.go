@@ -1,33 +1,29 @@
 package game
 
+const (
+	mapRow     = 30
+	mapColumn  = 40
+	cellWidth  = 20
+	cellHeight = 20
+	lineWidth  = 1
+)
+
 type Map struct {
-	Row    uint32 `json:"row"`
-	Column uint32 `json:"column"`
-
-	CellWidth  uint32 `json:"cell_width"`
-	CellHeight uint32 `json:"cell_height"`
-	LineWidth  uint32 `json:"line_width"`
-
 	Cells []Camp `json:"cells"`
 }
 
 func NewMap() Map {
 	return Map{
-		Row:        30,
-		Column:     40,
-		Cells:      []Camp{},
-		CellWidth:  20,
-		CellHeight: 20,
-		LineWidth:  1,
+		Cells: []Camp{},
 	}
 }
 
 func (m *Map) W() float64 {
-	return float64(m.Column * m.CellWidth)
+	return float64(mapColumn * (cellWidth + lineWidth))
 }
 
 func (m *Map) H() float64 {
-	return float64(m.Row * m.CellHeight)
+	return float64(mapRow * (cellHeight + lineWidth))
 }
 
 func (m *Map) Serialize() []byte {

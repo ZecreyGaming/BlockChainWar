@@ -124,10 +124,10 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 
 func (r *Room) onJoin(ctx context.Context) {
 	gi := GameInfo{
-		Row:        r.game.Map.Row,
-		Column:     r.game.Map.Column,
-		CellWidth:  r.game.Map.CellWidth,
-		CellHeight: r.game.Map.CellHeight,
+		Row:        mapRow,
+		Column:     mapColumn,
+		CellWidth:  cellWidth,
+		CellHeight: cellHeight,
 	}
 	r.game.Players.Range(func(key, value interface{}) bool {
 		if p, ok := value.(*Player); ok {

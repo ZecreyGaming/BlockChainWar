@@ -86,13 +86,13 @@ func removeCampTags(tags []string) []string {
 	return ret
 }
 
-func initCamp(x, y, row, col int) Camp {
+func initCamp(x, y int) Camp {
 	camp := Empty
 	for c := range CampTagMap {
 		if c == Empty {
 			continue
 		}
-		cx, cy := c.Center(row, col)
+		cx, cy := c.CenterCellIndex(mapRow, mapColumn)
 		if y >= cy-CampSizeMap[c][1]/2 && y < cy+CampSizeMap[c][1]/2 && x >= cx-CampSizeMap[c][0]/2 && x < cx+CampSizeMap[c][0]/2 {
 			camp = c
 			break
@@ -101,7 +101,7 @@ func initCamp(x, y, row, col int) Camp {
 	return camp
 }
 
-func (c Camp) Center(row, col int) (int, int) {
+func (c Camp) CenterCellIndex(row, col int) (int, int) {
 	switch c {
 	case ETH:
 		return col - CampSizeMap[ETH][0]/2, row - CampSizeMap[ETH][1]/2
