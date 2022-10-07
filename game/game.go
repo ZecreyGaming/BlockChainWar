@@ -204,6 +204,8 @@ func (g *Game) Update() {
 			// if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.W()+edgeWidth || player.playerObj.Y > g.Map.H()+edgeWidth {
 			// 	panic(fmt.Sprintln("camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
 			// }
+			// only allow to change one cell per player per frame
+			change := false
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
 				// fmt.Println("dx", dx, "dy", dy)
@@ -214,10 +216,13 @@ func (g *Game) Update() {
 					// fmt.Println("player", player.playerObj.X, player.playerObj.Y, "remain", remainX, remainY, "collision dx", dx, "collision dy", dy, "collisionObj.x", collisionObj.X, "collisionObj.y", collisionObj.Y)
 					if !collisionObj.HasTags(EdgeTag) {
 						remainX, remainY = player.rebound(dx, dy, remainX, remainY, collisionObj)
-						x, y := GetCellIndex(collisionObj.Tags())
-						g.Map.Cells[y*mapColumn+x] = player.Camp
-						collisionObj.RemoveTags(removeCampTags(collisionObj.Tags())...)
-						collisionObj.AddTags(CampTagMap[player.Camp])
+						if !change {
+							change = true
+							x, y := GetCellIndex(collisionObj.Tags())
+							g.Map.Cells[y*mapColumn+x] = player.Camp
+							collisionObj.RemoveTags(removeCampTags(collisionObj.Tags())...)
+							collisionObj.AddTags(CampTagMap[player.Camp])
+						}
 					} else if collisionObj.HasTags(HorizontalEdgeTag) {
 						player.Vy = -player.Vy
 						remainX -= dx
