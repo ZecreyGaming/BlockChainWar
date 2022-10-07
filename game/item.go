@@ -29,10 +29,10 @@ var (
 	}
 
 	AllItem = map[ItemType]Item{
-		Accelerator: Item{
+		Accelerator: {
 			Type:      Accelerator,
 			Name:      AcceleratorTag,
-			Thumbnail: "https://i.imgur.com/8ZQ2Z9M.png",
+			Thumbnail: "https://res.cloudinary.com/zecrey/image/upload/v1665155743/accelerator_t9vvkw.jpg",
 		},
 	}
 )
