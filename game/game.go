@@ -24,7 +24,7 @@ import (
 type GameStatus int
 
 const (
-	gameDuration = 1 * time.Minute
+	gameDuration = 3 * time.Second
 
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
@@ -33,7 +33,7 @@ const (
 	minCellSize = 5
 	edgeWidth   = minCellSize + lineWidth
 
-	playerInitialVelocity = 1
+	playerInitialVelocity = 2
 
 	GameNotStarted GameStatus = iota
 	GameRunning
@@ -119,16 +119,17 @@ func (g *Game) GetGameID() uint {
 func (g *Game) start() <-chan []byte {
 	g.GameStatus = GameRunning
 	stateChan := make(chan []byte)
-	ticker := time.NewTicker(gameDuration)
 	go func() {
+		gameTime := time.NewTimer(gameDuration)
 		for {
 			s, _ := g.Serialize()
 			g.Update()
 			select {
 			case <-g.ctx.Done():
 				return
-			case <-ticker.C:
+			case <-gameTime.C:
 				g.nextRound()
+				gameTime.Reset(gameDuration)
 			default:
 				stateChan <- s
 			}

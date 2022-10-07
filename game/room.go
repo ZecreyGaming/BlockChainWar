@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -85,9 +84,9 @@ type NewUser struct {
 
 // Join room
 func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
-	if r.game == nil || r.game.GameStatus != GameRunning {
-		return nil, pitaya.Error(fmt.Errorf("GAME_NOT_START"), "GAME_NOT_START", map[string]string{"failed": "game not start"})
-	}
+	// if r.game == nil || r.game.GameStatus != GameRunning {
+	// 	return nil, pitaya.Error(fmt.Errorf("GAME_NOT_START"), "GAME_NOT_START", map[string]string{"failed": "game not start"})
+	// }
 
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
