@@ -19,7 +19,6 @@ import (
 	"github.com/kvartborg/vector"
 	"github.com/solarlune/resolv"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type GameStatus int
@@ -46,7 +45,7 @@ type Game struct {
 	space       *resolv.Space
 	frameNumber uint32
 
-	ID         uint
+	gameInfo   *model.Game
 	ctx        context.Context
 	Map        Map      `json:"map"`
 	Players    sync.Map `json:"players"`
@@ -68,7 +67,7 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop 
 	}
 
 	v.initMap()
-	v.initGameID()
+	v.initGameInfo()
 
 	v.AddPlayer(11111, ETH)
 	v.AddPlayer(22222, BNB)
@@ -98,12 +97,11 @@ func (g *Game) initMap() {
 	}
 }
 
-func (g *Game) initGameID() {
-	dbGame := &model.Game{StartTime: time.Now()}
-	if err := g.db.Game.Create(dbGame); err != nil {
+func (g *Game) initGameInfo() {
+	g.gameInfo = &model.Game{StartTime: time.Now(), EndTime: time.Now().Add(10 * time.Minute)}
+	if err := g.db.Game.Create(g.gameInfo); err != nil {
 		zap.L().Error("failed to create game", zap.Error(err))
 	}
-	g.ID = dbGame.ID
 }
 
 func (g *Game) Start() <-chan []byte {
@@ -178,7 +176,9 @@ func (g *Game) Serialize() ([]byte, error) {
 
 func (g *Game) Save(winner Camp) {
 	campID := uint8(winner)
-	if err := g.db.Game.Update(&model.Game{Model: gorm.Model{ID: g.ID}, EndTime: time.Now(), WinnerID: campID}); err != nil {
+	g.gameInfo.WinnerID = campID
+	g.gameInfo.EndTime = time.Now()
+	if err := g.db.Game.Update(g.gameInfo); err != nil {
 		zap.L().Error("failed to update game", zap.Error(err))
 	}
 	if err := g.db.Camp.IncreaseScore(campID); err != nil {
@@ -190,10 +190,14 @@ func (g *Game) GetWinner() Camp {
 	return BTC
 }
 
+func (g *Game) GetGameInfo() *model.Game {
+	return g.gameInfo
+}
+
 func (g *Game) Reset() {
 	g.Players = sync.Map{}
 	g.initMap()
-	g.initGameID()
+	g.initGameInfo()
 }
 
 func (g *Game) Update() {

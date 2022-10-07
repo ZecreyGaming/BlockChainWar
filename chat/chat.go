@@ -97,7 +97,7 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 		r.app.GroupRemoveMember(ctx, chatRoomName, s.UID())
 	})
 
-	return &JoinResponse{Result: "success", GameRound: r.game.ID}, nil
+	return &JoinResponse{Result: "success", GameRound: r.game.GetGameInfo().ID, GameEndTime: r.game.GetGameInfo().EndTime}, nil
 }
 
 // Message sync last message to all members
