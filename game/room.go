@@ -83,12 +83,6 @@ type JoinResponse struct {
 	Result string `json:"result"`
 }
 
-// UserMessage represents a message that user sent
-type UserMessage struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-}
-
 // NewUser message will be received when new user join room
 type NewUser struct {
 	Content string `json:"content"`
@@ -126,15 +120,6 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	})
 
 	return &JoinResponse{Result: "success"}, nil
-}
-
-// Message sync last message to all members
-func (r *Room) Message(ctx context.Context, msg *UserMessage) {
-	// fmt.Println("Message: ", msg)
-	err := r.app.GroupBroadcast(ctx, r.cfg.FrontendType, gameRoomName, "onMessage", msg)
-	if err != nil {
-		// fmt.Println("error broadcasting message", err)
-	}
 }
 
 func (r *Room) onJoin(ctx context.Context) {

@@ -45,6 +45,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 
 	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
+	http.Handle("/demoweb/", http.StripPrefix("/demoweb/", http.FileServer(http.Dir("demoweb"))))
 
 	go http.ListenAndServe(":3251", nil)
 

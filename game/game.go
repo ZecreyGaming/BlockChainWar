@@ -257,10 +257,8 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	cx, cy := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
 	cx *= int(g.Map.CellWidth)                               // pixel index
 	cy *= int(g.Map.CellHeight)
-	fmt.Println("cx cy", cx, cy)
 	x, y := toSpaceXY(float64(cx), float64(cy))
 
-	fmt.Println("player xy", CampTagMap[camp], x, y)
 	// ang := rand.Float64() * 2 * math.Pi
 	player := &Player{
 		ID:   playerID,

@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -55,10 +56,15 @@ type JoinResponse struct {
 	GameEndTime time.Time `json:"game_end_time"`
 }
 
+type MessageResponse struct {
+	Code   int    `json:"code"`
+	Result string `json:"result"`
+}
+
 // UserMessage represents a message that user sent
 type UserMessage struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	PlayerID uint64 `json:"player_id"`
+	Message  string `json:"message"`
 }
 
 // NewUser message will be received when new user join room
@@ -68,6 +74,7 @@ type NewUser struct {
 
 // Join room
 func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
+	fmt.Println("on chat join")
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
@@ -80,7 +87,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	// get last 30 messages
 	messages, err := r.db.Message.ListLatest(offset, limit)
 	if err != nil {
-		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "get messages"})
+		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "get messages"})
 	}
 	s.Push("onHistoryMessage", messages)
 
@@ -102,13 +109,12 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 }
 
 // Message sync last message to all members
-func (r *Room) Message(ctx context.Context, msg *model.Message) {
-	// fmt.Println("Message: ", msg)
+func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageResponse, error) {
 	err := r.app.GroupBroadcast(ctx, r.cfg.FrontendType, chatRoomName, "onMessage", msg)
 	if err != nil {
 		zap.L().Error("broadcast message failed", zap.Error(err))
 	}
-	err = r.db.Message.Create(msg)
+	err = r.db.Message.Create(&model.Message{})
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))
 	}
@@ -117,4 +123,7 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) {
 	if r.game != nil {
 		r.game.AddPlayer(uint64(playerID), game.DecideCamp(msg.Message))
 	}
+	return &MessageResponse{
+		Result: "success",
+	}, nil
 }
