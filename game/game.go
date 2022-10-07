@@ -298,10 +298,10 @@ func (g *Game) Update() {
 						}
 					} else if collisionObj.HasTags(ItemTag) {
 						if collisionObj.HasTags(AcceleratorTag) {
-							player.Vx *= 1.5
-							player.Vy *= 1.5
-							remainX *= 1.5
-							remainY *= 1.5
+							player.Vx *= 1.2
+							player.Vy *= 1.2
+							remainX *= 1.2
+							remainY *= 1.2
 							id := itemTagsToId(collisionObj.Tags())
 							g.Items.Delete(id)
 							g.space.Remove(collisionObj)
