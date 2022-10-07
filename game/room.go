@@ -107,7 +107,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	r.app.GroupAddMember(ctx, config.GameRoomName, s.UID()) // add session to group
 
 	// notify others
-	r.onJoin(false)
+	r.onJoin(ctx, false)
 
 	// on session close, remove it from group
 	s.OnClose(func() {
@@ -117,7 +117,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	return &JoinResponse{Result: "success"}, nil
 }
 
-func (r *Room) onJoin(replay bool) {
+func (r *Room) onJoin(ctx context.Context, replay bool) {
 	mi := MapInfo{
 		Row:        mapRow,
 		Column:     mapColumn,
@@ -133,19 +133,19 @@ func (r *Room) onJoin(replay bool) {
 	})
 
 	mi.Players, _ = r.db.Player.List(pids...)
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
+	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
 }
 
-func (r *Room) onGameStart() {
+func (r *Room) onGameStart(ctx context.Context) {
 	info, _ := r.game.GetGameInfo()
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStart", info)
-	r.onJoin(true)
+	r.onJoin(ctx, true)
 }
 
-func (r *Room) onGameStop() {
+func (r *Room) onGameStop(ctx context.Context) {
 	stop := r.game.GetGameStop()
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", stop)
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", stop)
+	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", stop)
+	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", stop)
 }
 
 func (r *Room) onCampVotesChange(camp Camp, votes int32) {
