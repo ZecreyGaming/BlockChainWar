@@ -43,6 +43,7 @@ const (
 type Game struct {
 	db                *db.Client
 	cfg               *config.Config
+	onGameStart       func()
 	onGameStop        func()
 	onCampVotesChange func(camp Camp, votes int32)
 
@@ -62,13 +63,14 @@ type Game struct {
 	stopSignalChan chan chan struct{}
 }
 
-func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop func(), onCampVotesChange func(camp Camp, votes int32)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart func(), onGameStop func(), onCampVotesChange func(camp Camp, votes int32)) *Game {
 	v := &Game{
 		ctx:               ctx,
 		db:                db,
 		cfg:               cfg,
 		campVotes:         sync.Map{},
 		Players:           sync.Map{},
+		onGameStart:       onGameStart,
 		onGameStop:        onGameStop,
 		onCampVotesChange: onCampVotesChange,
 		GameStatus:        GameNotStarted,
@@ -159,6 +161,7 @@ func (g *Game) nextRound() {
 	g.AddPlayer(33333, BTC)
 	g.AddPlayer(44444, AVAX)
 	g.AddPlayer(55555, MATIC)
+	g.onGameStart()
 	g.nextRoundChan <- struct{}{}
 }
 

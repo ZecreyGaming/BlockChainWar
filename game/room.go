@@ -40,7 +40,7 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 		cfg: cfg,
 	}
 	r.ctx, r.tickerCancel = context.WithCancel(context.Background())
-	r.game = NewGame(r.ctx, cfg, db, r.onGameStop, r.onCampVotesChange)
+	r.game = NewGame(r.ctx, cfg, db, r.onGameStart, r.onGameStop, r.onCampVotesChange)
 	app.Register(r,
 		component.WithName(config.GameRoomName),
 		component.WithNameFunc(strings.ToLower),
@@ -135,9 +135,15 @@ func (r *Room) onJoin(ctx context.Context) {
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
 }
 
+func (r *Room) onGameStart() {
+	info, _ := r.game.GetGameInfo()
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStart", info)
+}
+
 func (r *Room) onGameStop() {
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", r.game.GetGameStop())
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", r.game.GetGameStop())
+	stop := r.game.GetGameStop()
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", stop)
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", stop)
 }
 
 func (r *Room) onCampVotesChange(camp Camp, votes int32) {
