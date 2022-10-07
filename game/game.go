@@ -24,8 +24,7 @@ import (
 type GameStatus int
 
 const (
-	gameDuration = 30 * time.Second
-
+	CellTag           = "CELL"
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
 	VerticalEdgeTag   = "VERTICAL"
@@ -55,9 +54,11 @@ type Game struct {
 
 	dbGame     *model.Game
 	ctx        context.Context
-	Map        Map      `json:"map"`
-	Players    sync.Map `json:"players"`
+	Map        Map `json:"map"`
 	GameStatus GameStatus
+
+	Players sync.Map `json:"players"`
+	Items   sync.Map `json:"items"`
 
 	nextRoundChan  chan struct{}
 	stopSignalChan chan chan struct{}
@@ -70,6 +71,7 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart
 		cfg:               cfg,
 		campVotes:         sync.Map{},
 		Players:           sync.Map{},
+		Items:             sync.Map{},
 		onGameStart:       onGameStart,
 		onGameStop:        onGameStop,
 		onCampVotesChange: onCampVotesChange,
@@ -104,14 +106,14 @@ func (g *Game) initMap() {
 		for x := 0; x < mapColumn; x++ {
 			camp := initCamp(x, y)
 			ox, oy := cellIndexToSpaceXY(x, y)
-			g.space.Add(resolv.NewObject(ox, oy, float64(cellWidth), float64(cellHeight), CampTagMap[camp], CellIndexToTag(x, y)))
+			g.space.Add(resolv.NewObject(ox, oy, float64(cellWidth), float64(cellHeight), CampTagMap[camp], CellTag, CellIndexToTag(x, y)))
 			g.Map.Cells = append(g.Map.Cells, camp)
 		}
 	}
 }
 
 func (g *Game) initGameInfo() {
-	g.dbGame = &model.Game{StartTime: time.Now(), EndTime: time.Now().Add(gameDuration)}
+	g.dbGame = &model.Game{StartTime: time.Now(), EndTime: time.Now().Add(time.Duration(g.cfg.GameDuration) * time.Second)}
 	if err := g.db.Game.Create(g.dbGame); err != nil {
 		zap.L().Error("failed to create game", zap.Error(err))
 	}
@@ -129,7 +131,7 @@ func (g *Game) start() <-chan []byte {
 	g.GameStatus = GameRunning
 	stateChan := make(chan []byte)
 	go func() {
-		gameTime := time.NewTimer(gameDuration)
+		gameTime := time.NewTimer(time.Duration(g.cfg.GameDuration) * time.Second)
 		for {
 			s, _ := g.Serialize()
 			g.Update()
@@ -138,7 +140,7 @@ func (g *Game) start() <-chan []byte {
 				return
 			case <-gameTime.C:
 				g.nextRound()
-				gameTime.Reset(gameDuration)
+				gameTime.Reset(time.Duration(g.cfg.GameDuration) * time.Second)
 			default:
 				stateChan <- s
 			}
@@ -170,6 +172,8 @@ func (g *Game) nextRound() {
 // map: map size bytes
 // player number: 4 bytes
 // players: 26 * len(players) bytes
+// item number: 4 bytes
+// items: 21 * items number bytes
 func (g *Game) Serialize() ([]byte, error) {
 	atomic.AddUint32(&g.frameNumber, 1)
 	bytesBuf := bytes.NewBuffer([]byte{})
@@ -185,21 +189,30 @@ func (g *Game) Serialize() ([]byte, error) {
 	bytesBuf.Write(g.Map.Serialize())
 
 	playerNumber := uint32(0)
+	playerBytes := []byte{}
 	g.Players.Range(func(key, value interface{}) bool { // O(N) call, but since players are not that many, it's fine
 		if v, ok := value.(*Player); ok && v != nil {
 			playerNumber++
+			playerBytes = append(playerBytes, v.Serialize()...)
 		}
 		return true
 	})
 	binary.BigEndian.PutUint32(b, playerNumber)
 	bytesBuf.Write(b)
+	bytesBuf.Write(playerBytes)
 
-	g.Players.Range(func(key, value interface{}) bool {
-		if v, ok := value.(*Player); ok && v != nil {
-			bytesBuf.Write(v.Serialize())
+	itemNumber := uint32(0)
+	itemBytes := []byte{}
+	g.Items.Range(func(key, value interface{}) bool { // O(N) call, but since items are not that many, it's fine
+		if v, ok := value.(*ItemObject); ok && v != nil {
+			itemNumber++
+			itemBytes = append(itemBytes, v.Serialize()...)
 		}
 		return true
 	})
+	binary.BigEndian.PutUint32(b, itemNumber)
+	bytesBuf.Write(b)
+	bytesBuf.Write(itemBytes)
 
 	return bytesBuf.Bytes(), nil
 }
@@ -256,21 +269,14 @@ func (g *Game) Update() {
 	g.Players.Range(func(key, value interface{}) bool {
 		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
 			remainX, remainY := player.Vx, player.Vy
-			// fmt.Println("camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
-			// if player.playerObj.X < edgeWidth || player.playerObj.Y < edgeWidth || player.playerObj.X > g.Map.W()+edgeWidth || player.playerObj.Y > g.Map.H()+edgeWidth {
-			// 	panic(fmt.Sprintln("camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy))
-			// }
-			// only allow to change one cell per player per frame
+
 			change := false
 			for remainX != 0 || remainY != 0 {
 				dx, dy := remainX, remainY
-				// fmt.Println("dx", dx, "dy", dy)
 				if collision := player.playerObj.Check(dx, dy, getCollisionTags(player.Camp)...); collision != nil {
-					// fmt.Println("##collision")
 					collisionObj := collision.Objects[0]
 					dx, dy = resolvDxDy(dx, dy, collision.ContactWithObject(collisionObj))
-					// fmt.Println("player", player.playerObj.X, player.playerObj.Y, "remain", remainX, remainY, "collision dx", dx, "collision dy", dy, "collisionObj.x", collisionObj.X, "collisionObj.y", collisionObj.Y)
-					if !collisionObj.HasTags(EdgeTag) {
+					if collisionObj.HasTags(CellTag) {
 						remainX, remainY = player.rebound(dx, dy, remainX, remainY, collisionObj)
 						if !change {
 							change = true
@@ -279,14 +285,26 @@ func (g *Game) Update() {
 							collisionObj.RemoveTags(removeCampTags(collisionObj.Tags())...)
 							collisionObj.AddTags(CampTagMap[player.Camp])
 						}
-					} else if collisionObj.HasTags(HorizontalEdgeTag) {
-						player.Vy = -player.Vy
-						remainX -= dx
-						remainY = dy - remainY
-					} else {
-						player.Vx = -player.Vx
-						remainX = dx - remainX
-						remainY -= dy
+					} else if collisionObj.HasTags(EdgeTag) {
+						if collisionObj.HasTags(HorizontalEdgeTag) {
+							player.Vy = -player.Vy
+							remainX -= dx
+							remainY = dy - remainY
+						} else {
+							player.Vx = -player.Vx
+							remainX = dx - remainX
+							remainY -= dy
+						}
+					} else if collisionObj.HasTags(ItemTag) {
+						if collisionObj.HasTags(AcceleratorTag) {
+							player.Vx *= 1.5
+							player.Vy *= 1.5
+							remainX *= 1.5
+							remainY *= 1.5
+							id := itemTagsToId(collisionObj.Tags())
+							g.Items.Delete(id)
+							g.space.Remove(collisionObj)
+						}
 					}
 				} else {
 					remainX -= dx
@@ -301,6 +319,7 @@ func (g *Game) Update() {
 		}
 		return true
 	})
+	g.TryAddItem()
 }
 
 func (g *Game) Size() uint32 {
@@ -338,6 +357,21 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 
 	// fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player
+}
+
+func (g *Game) TryAddItem() {
+	if g.GameStatus != GameRunning && rand.Intn(g.cfg.ItemFrameChance) != 1 {
+		return
+	}
+	x, y := g.Map.RandomSpaceXY()
+	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[Accelerator]))
+	item := &ItemObject{
+		Id:   uint32(time.Now().Unix()),
+		X:    x,
+		Y:    y,
+		Item: AllItem[Accelerator],
+	}
+	g.Items.LoadOrStore(item.Id, item)
 }
 
 func (g *Game) incrCampVotes(camp Camp) {

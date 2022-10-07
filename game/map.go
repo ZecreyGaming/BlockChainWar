@@ -1,5 +1,7 @@
 package game
 
+import "math/rand"
+
 const (
 	mapRow     = 30
 	mapColumn  = 40
@@ -48,4 +50,10 @@ func (m *Map) Size() uint32 {
 
 func (m *Map) OutofMap(x, y float64) bool {
 	return x < 0 || x > m.W() || y < 0 || y > m.H()
+}
+
+func (m *Map) RandomSpaceXY() (float64, float64) {
+	x := rand.Intn(mapColumn) * (cellWidth + lineWidth)
+	y := rand.Intn(mapRow) * (cellHeight + lineWidth)
+	return float64(x), float64(y)
 }

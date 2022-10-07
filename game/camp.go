@@ -72,7 +72,7 @@ func getCollisionTags(camp Camp) (retval []string) {
 	default:
 		retval = []string{CampTagMap[BTC], CampTagMap[ETH], CampTagMap[BNB], CampTagMap[AVAX], CampTagMap[MATIC], CampTagMap[Empty]}
 	}
-	retval = append(retval, HorizontalEdgeTag, VerticalEdgeTag, EdgeTag)
+	retval = append(retval, EdgeTag, ItemTag)
 	return
 }
 

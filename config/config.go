@@ -17,6 +17,8 @@ type Config struct {
 	FPS               int       `json:"fps"`
 	GameRoundInterval int       `json:"game_round_interval"`
 	FrontendType      string    `json:"frontend_type"`
+	ItemFrameChance   int       `json:"item_frame_chance"`
+	GameDuration      int       `json:"game_duration"`
 }
 
 func Read(configPath string) *Config {
