@@ -147,6 +147,12 @@ func (g *Game) nextRound() {
 	// wait game to start
 	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
 	g.Reset()
+
+	g.AddPlayer(11111, ETH)
+	g.AddPlayer(22222, BNB)
+	g.AddPlayer(33333, BTC)
+	g.AddPlayer(44444, AVAX)
+	g.AddPlayer(55555, MATIC)
 	g.nextRoundChan <- struct{}{}
 }
 
