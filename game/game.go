@@ -68,11 +68,11 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop 
 	v.initMap()
 	v.initGameID()
 
-	// v.AddPlayer(11111, ETH)
-	// v.AddPlayer(22222, BNB)
-	// v.AddPlayer(33333, BTC)
-	// v.AddPlayer(44444, AVAX)
-	// v.AddPlayer(55555, MATIC)
+	v.AddPlayer(11111, ETH)
+	v.AddPlayer(22222, BNB)
+	v.AddPlayer(33333, BTC)
+	v.AddPlayer(44444, AVAX)
+	v.AddPlayer(55555, MATIC)
 
 	return v
 }
