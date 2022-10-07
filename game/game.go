@@ -262,6 +262,7 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	// if g.GameStatus != GameRunning {
 	// 	return nil
 	// }
+	fmt.Println("on add player")
 	if camp == Empty {
 		return nil
 	}

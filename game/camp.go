@@ -120,7 +120,7 @@ func (c Camp) CenterCellIndex(row, col int) (int, int) {
 
 func DecideCamp(msg string) Camp {
 	for _, tag := range CampTagMap {
-		if strings.Contains(msg, tag) {
+		if strings.Contains(strings.ToUpper(msg), tag) {
 			return CampTagMapReverse[tag]
 		}
 	}

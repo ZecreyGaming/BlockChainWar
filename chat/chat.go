@@ -102,7 +102,7 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 
 // Message sync last message to all members
 func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageResponse, error) {
-	err := r.db.Message.Create(&model.Message{})
+	err := r.db.Message.Create(msg)
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))
 	}
@@ -118,6 +118,7 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 	if err != nil {
 		zap.L().Error("broadcast message failed", zap.Error(err))
 	}
+	fmt.Println("camp", game.DecideCamp(msg.Message))
 	if r.game != nil {
 		r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
 	}

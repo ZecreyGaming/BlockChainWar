@@ -9,7 +9,7 @@ import (
 
 const (
 	PlayerTag           = "Player"
-	defaultPlayerPixelR = 15
+	defaultPlayerPixelR = 5
 )
 
 type Player struct {
@@ -35,7 +35,7 @@ func (p *Player) Serialize() []byte {
 	binary.Write(bytesBuffer, binary.BigEndian, uint16(p.R))
 	x, y := float64(0), float64(0)
 	if p.playerObj != nil {
-		x, y = space2MapXY(p.playerObj.X, p.playerObj.Y)
+		x, y = space2MapXY(p.GetCenter())
 	}
 	binary.Write(bytesBuffer, binary.BigEndian, x)
 	binary.Write(bytesBuffer, binary.BigEndian, y)
@@ -44,6 +44,10 @@ func (p *Player) Serialize() []byte {
 
 func (p *Player) Size() uint32 {
 	return 18
+}
+
+func (p *Player) GetCenter() (float64, float64) {
+	return p.playerObj.X + float64(p.R), p.playerObj.Y + float64(p.R)
 }
 
 func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (float64, float64) {
