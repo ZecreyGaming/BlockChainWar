@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/COAOX/zecrey_warrior/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -18,5 +20,7 @@ func (m *message) ListLatest(offset, size int) ([]model.Message, error) {
 	if err == gorm.ErrRecordNotFound {
 		err = nil
 	}
+
+	fmt.Println("list message", messages)
 	return messages, err
 }
