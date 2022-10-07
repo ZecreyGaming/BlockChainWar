@@ -319,7 +319,7 @@ func (g *Game) Update() {
 		}
 		return true
 	})
-	g.TryAddItem()
+	// g.TryAddItem()
 }
 
 func (g *Game) Size() uint32 {
