@@ -8,9 +8,8 @@ import (
 
 type Player struct {
 	PlayerID  uint64 `gorm:"primaryKey" json:"player_id"`
-	Name      string `json:"name"`
+	Name      string `json:"player_name"`
 	Score     int    `json:"score"`
-	Avatar    string `json:"avatar"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

@@ -66,7 +66,7 @@ type NewUser struct {
 }
 
 // Join room
-func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
+func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, error) {
 	fmt.Println("on chat join")
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
@@ -84,11 +84,9 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	}
 	s.Push("onHistoryMessage", messages)
 
-	// uids, err := r.app.GroupMembers(ctx, gameRoomName)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// s.Push("onMembers", &AllMembers{Members: uids})
+	if err := r.db.Player.Create(player); err != nil {
+		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "create player, db issue"})
+	}
 
 	// new user join group
 	r.app.GroupAddMember(ctx, chatRoomName, s.UID()) // add session to group
@@ -103,15 +101,22 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 
 // Message sync last message to all members
 func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageResponse, error) {
-	err := r.app.GroupBroadcast(ctx, r.cfg.FrontendType, chatRoomName, "onMessage", msg)
-	if err != nil {
-		zap.L().Error("broadcast message failed", zap.Error(err))
-	}
-	err = r.db.Message.Create(&model.Message{})
+	err := r.db.Message.Create(&model.Message{})
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))
 	}
 
+	p, err := r.db.Player.Get(msg.PlayerID)
+	if err != nil {
+		zap.L().Error("get player failed", zap.Error(err))
+		return nil, pitaya.Error(err, "RH-400", map[string]string{"failed": "get player, playerID not found"})
+	}
+
+	msg.Player = p
+	err = r.app.GroupBroadcast(ctx, r.cfg.FrontendType, chatRoomName, "onMessage", msg)
+	if err != nil {
+		zap.L().Error("broadcast message failed", zap.Error(err))
+	}
 	if r.game != nil {
 		r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
 	}
