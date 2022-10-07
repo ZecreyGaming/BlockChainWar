@@ -11,7 +11,6 @@ import (
 	"github.com/COAOX/zecrey_warrior/db"
 	"github.com/COAOX/zecrey_warrior/game"
 	"github.com/COAOX/zecrey_warrior/model"
-	"github.com/google/uuid"
 	"github.com/topfreegames/pitaya/constants"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
@@ -113,9 +112,8 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 		zap.L().Error("save message failed", zap.Error(err))
 	}
 
-	playerID := uuid.New().ID()
 	if r.game != nil {
-		r.game.AddPlayer(uint64(playerID), game.DecideCamp(msg.Message))
+		r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
 	}
 	return &MessageResponse{
 		Result: "success",

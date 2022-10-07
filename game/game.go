@@ -262,6 +262,9 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	// if g.GameStatus != GameRunning {
 	// 	return nil
 	// }
+	if camp == Empty {
+		return nil
+	}
 	x, y := cellIndexToSpaceXY(camp.CenterCellIndex(mapRow, mapColumn))
 
 	ang := rand.Float64() * 2 * math.Pi
