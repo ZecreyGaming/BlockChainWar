@@ -241,6 +241,7 @@ func (g *Game) Reset() {
 	g.Players = sync.Map{}
 	g.initMap()
 	g.initGameInfo()
+	g.GameStatus = GameRunning
 }
 
 func (g *Game) Update() {
