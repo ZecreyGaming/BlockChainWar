@@ -44,14 +44,17 @@ func (g *Game) GetGameInfo() (GameInfo, error) {
 
 type GameStop struct {
 	Winner        Camp           `json:"winner"`
+	WinnerVotes   int            `json:"winner_votes"`
 	NextCountDown int64          `json:"next_count_down"`
 	CampRank      []model.Camp   `json:"camp_rank"`
 	PlayerRank    []model.Player `json:"player_rank"`
 }
 
 func (g *Game) GetGameStop() GameStop {
+	winner, score := g.GetWinner()
 	v := GameStop{
-		Winner:        g.GetWinner(),
+		Winner:        winner,
+		WinnerVotes:   score,
 		NextCountDown: int64(g.cfg.GameRoundInterval),
 	}
 	rankLimit := 3

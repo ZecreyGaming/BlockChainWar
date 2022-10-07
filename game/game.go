@@ -43,8 +43,10 @@ const (
 type Game struct {
 	db                *db.Client
 	cfg               *config.Config
-	onGameStop        func(winner Camp)
+	onGameStop        func()
 	onCampVotesChange func(camp Camp, votes int32)
+
+	res *res
 
 	space       *resolv.Space
 	frameNumber uint32
@@ -60,7 +62,7 @@ type Game struct {
 	stopSignalChan chan chan struct{}
 }
 
-func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop func(winner Camp), onCampVotesChange func(camp Camp, votes int32)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop func(), onCampVotesChange func(camp Camp, votes int32)) *Game {
 	v := &Game{
 		ctx:               ctx,
 		db:                db,
@@ -76,6 +78,7 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStop 
 
 	v.initMap()
 	v.initGameInfo()
+	v.resetRes()
 
 	v.AddPlayer(11111, ETH)
 	v.AddPlayer(22222, BNB)
@@ -112,6 +115,10 @@ func (g *Game) initGameInfo() {
 	}
 }
 
+func (g *Game) resetRes() {
+	g.res = nil
+}
+
 func (g *Game) GetGameID() uint {
 	return g.dbGame.ID
 }
@@ -139,11 +146,10 @@ func (g *Game) start() <-chan []byte {
 }
 
 func (g *Game) nextRound() {
-	winner := g.GetWinner()
-	g.Save(winner)
+	g.Save()
 	g.GameStatus = GameStopped
 	g.stopSignalChan <- g.nextRoundChan
-	g.onGameStop(g.GetWinner())
+	g.onGameStop()
 	// wait game to start
 	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
 	g.Reset()
@@ -195,7 +201,8 @@ func (g *Game) Serialize() ([]byte, error) {
 	return bytesBuf.Bytes(), nil
 }
 
-func (g *Game) Save(winner Camp) {
+func (g *Game) Save() {
+	winner, _ := g.GetWinner()
 	campID := uint8(winner)
 	g.dbGame.WinnerID = campID
 	g.dbGame.EndTime = time.Now()
@@ -210,7 +217,10 @@ func (g *Game) Save(winner Camp) {
 	}
 }
 
-func (g *Game) GetWinner() Camp {
+func (g *Game) GetWinner() (Camp, int) {
+	if g.res != nil {
+		return g.res.winner, g.res.score
+	}
 	score := make(map[Camp]int)
 	for _, v := range g.Map.Cells {
 		score[v]++
@@ -223,7 +233,8 @@ func (g *Game) GetWinner() Camp {
 			winner = k
 		}
 	}
-	return winner
+	g.res = &res{winner: winner, score: maxScore}
+	return winner, maxScore
 }
 
 func (g *Game) Reset() {
@@ -403,4 +414,9 @@ func space2MapXY(x, y float64) (float64, float64) {
 
 func cellIndexToSpaceXY(x, y int) (float64, float64) {
 	return float64(x*(cellWidth+lineWidth) + edgeWidth), float64(y*(cellHeight+lineWidth) + edgeWidth)
+}
+
+type res struct {
+	winner Camp
+	score  int
 }

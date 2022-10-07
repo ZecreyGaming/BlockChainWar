@@ -135,7 +135,7 @@ func (r *Room) onJoin(ctx context.Context) {
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
 }
 
-func (r *Room) onGameStop(winer Camp) {
+func (r *Room) onGameStop() {
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", r.game.GetGameStop())
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", r.game.GetGameStop())
 }
