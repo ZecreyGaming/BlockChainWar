@@ -68,9 +68,9 @@ func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (floa
 	}
 
 	v := math.Sqrt(player.Vx*player.Vx + player.Vy*player.Vy)
-	player.Vx, player.Vy = v/float64(player.R)*(nx-cell.X), v/float64(player.R)*(ny-cell.Y)
+	player.Vx, player.Vy = v/float64(player.R)*(cell.X-nx), v/float64(player.R)*(cell.Y-ny)
 
-	px, py := (nx - cell.X), (ny - cell.Y)
+	px, py := (cell.X - nx), (cell.Y - ny)
 	pl := math.Sqrt(px*px + py*py)
 	return remianV / pl * px, remianV / pl * py
 }
