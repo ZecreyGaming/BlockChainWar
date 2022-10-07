@@ -218,7 +218,7 @@ func (g *Game) GetWinner() Camp {
 	maxScore := 0
 	winner := BTC
 	for k, v := range score {
-		if v > maxScore {
+		if v > maxScore && k != Empty {
 			maxScore = v
 			winner = k
 		}
