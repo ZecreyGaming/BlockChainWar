@@ -123,7 +123,9 @@ func (r *Room) onJoin(ctx context.Context, replay bool) {
 		Column:     mapColumn,
 		CellWidth:  cellWidth,
 		CellHeight: cellHeight,
-		Replay:     replay,
+
+		Item:   AllItems,
+		Replay: replay,
 	}
 
 	pids := []uint64{}
@@ -163,6 +165,7 @@ type MapInfo struct {
 	CellWidth  uint32 `json:"cell_width"`
 	CellHeight uint32 `json:"cell_height"`
 
+	Item    []Item         `json:"items"`
 	Players []model.Player `json:"players"`
 	Replay  bool           `json:"replay"`
 }

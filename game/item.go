@@ -11,8 +11,8 @@ type ItemType uint8
 const (
 	itemPixelR = 5
 
-	Accelerator ItemType = iota
-	ItemTag              = "ITEM"
+	ItemAccelerator ItemType = iota
+	ItemTag                  = "ITEM"
 
 	AcceleratorTag = "Accelerator"
 
@@ -21,19 +21,22 @@ const (
 
 var (
 	ItemTagMap = map[ItemType]string{
-		Accelerator: AcceleratorTag,
+		ItemAccelerator: AcceleratorTag,
 	}
 
 	ItemTagMapReverse = map[string]ItemType{
-		AcceleratorTag: Accelerator,
+		AcceleratorTag: ItemAccelerator,
 	}
 
-	AllItem = map[ItemType]Item{
-		Accelerator: {
-			Type:      Accelerator,
-			Name:      AcceleratorTag,
-			Thumbnail: "https://res.cloudinary.com/zecrey/image/upload/v1665155743/accelerator_t9vvkw.jpg",
-		},
+	Accelerator = Item{
+		Type:      ItemAccelerator,
+		Name:      AcceleratorTag,
+		Thumbnail: "https://res.cloudinary.com/zecrey/image/upload/v1665155743/accelerator_t9vvkw.jpg",
+	}
+	ItemMap = map[ItemType]Item{}
+
+	AllItems = []Item{
+		Accelerator,
 	}
 )
 

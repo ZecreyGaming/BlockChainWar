@@ -364,12 +364,12 @@ func (g *Game) TryAddItem() {
 		return
 	}
 	x, y := g.Map.RandomSpaceXY()
-	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[Accelerator]))
+	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[ItemAccelerator]))
 	item := &ItemObject{
 		Id:   uint32(time.Now().Unix()),
 		X:    x,
 		Y:    y,
-		Item: AllItem[Accelerator],
+		Item: ItemMap[ItemAccelerator],
 	}
 	g.Items.LoadOrStore(item.Id, item)
 }
