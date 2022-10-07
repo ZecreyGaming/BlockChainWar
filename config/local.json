@@ -6,7 +6,7 @@
         "password": "public",
         "database": "zecrey_warrior"
     },
-    "fps": 1,
+    "fps": 30,
     "game_round_interval":15,
     "frontend_type": "zecrey_warrior"
 }

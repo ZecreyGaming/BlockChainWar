@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"math"
-	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,7 +28,7 @@ const (
 	VerticalEdgeTag   = "VERTICAL"
 
 	minCellSize = 5
-	edgeWidth   = defaultPlayerPixelR
+	edgeWidth   = minCellSize
 
 	playerInitialVelocity = 1
 
@@ -87,10 +85,10 @@ func (g *Game) initSpace() {
 	g.space.Add(resolv.NewObject(g.Map.W()+edgeWidth, 0, edgeWidth, g.Map.H()+edgeWidth, EdgeTag, VerticalEdgeTag))
 	g.space.Add(resolv.NewObject(edgeWidth, g.Map.H()+edgeWidth, g.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
 
-	for i := 0; i < int(g.Map.Row); i++ {
-		for j := 0; j < int(g.Map.Column); j++ {
-			camp := initCamp(i, j, int(g.Map.Row), int(g.Map.Column))
-			g.space.Add(resolv.NewObject(float64(j*int(g.Map.CellWidth)+edgeWidth), float64(i*int(g.Map.CellHeight)+edgeWidth), float64(g.Map.CellWidth), float64(g.Map.CellHeight), CampTagMap[camp], CellIndexToTag(j, i)))
+	for y := 0; y < int(g.Map.Row); y++ {
+		for x := 0; x < int(g.Map.Column); x++ {
+			camp := initCamp(x, y, int(g.Map.Row), int(g.Map.Column))
+			g.space.Add(resolv.NewObject(float64(x*int(g.Map.CellWidth)+edgeWidth), float64(y*int(g.Map.CellHeight)+edgeWidth), float64(g.Map.CellWidth), float64(g.Map.CellHeight), CampTagMap[camp], CellIndexToTag(x, y)))
 			g.Map.Cells = append(g.Map.Cells, camp)
 		}
 	}
@@ -164,19 +162,12 @@ func (g *Game) Serialize() ([]byte, error) {
 	binary.BigEndian.PutUint32(b, playerNumber)
 	bytesBuf.Write(b)
 
-	// debugBuf := bytes.NewBuffer(make([]byte, 100))
 	g.Players.Range(func(key, value interface{}) bool {
 		if v, ok := value.(*Player); ok && v != nil {
 			bytesBuf.Write(v.Serialize())
-			// debugBuf.Write(v.Serialize())
 		}
 		return true
 	})
-	// fmt.Printf("player bytes, %08b\n", debugBuf.Bytes())
-
-	// by, _ := json.Marshal(g)
-	// fmt.Println("game", string(by))
-	// fmt.Println(bytesBuf.Bytes())
 
 	return bytesBuf.Bytes(), nil
 }
@@ -263,22 +254,22 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	// if g.GameStatus != GameRunning {
 	// 	return nil
 	// }
-	x, y := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
-	x *= int(g.Map.CellWidth)                              // pixel index
-	y *= int(g.Map.CellHeight)
-	x += edgeWidth
-	y += edgeWidth
+	cx, cy := camp.Center(int(g.Map.Row), int(g.Map.Column)) // cell index
+	cx *= int(g.Map.CellWidth)                               // pixel index
+	cy *= int(g.Map.CellHeight)
+	fmt.Println("cx cy", cx, cy)
+	x, y := toSpaceXY(float64(cx), float64(cy))
 
-	ang := rand.Float64() * 2 * math.Pi
+	fmt.Println("player xy", CampTagMap[camp], x, y)
+	// ang := rand.Float64() * 2 * math.Pi
 	player := &Player{
 		ID:   playerID,
 		Camp: camp,
 		R:    defaultPlayerPixelR,
-		Vx:   math.Cos(ang) * playerInitialVelocity,
-		Vy:   math.Sin(ang) * playerInitialVelocity,
+		// Vx:   math.Cos(ang) * playerInitialVelocity,
+		// Vy:   math.Sin(ang) * playerInitialVelocity,
 	}
-	player.playerObj = resolv.NewObject(float64(x-player.R), float64(y-player.R), float64(2*player.R), float64(2*player.R), PlayerTag)
-	player.playerObj.SetShape(resolv.NewCircle(float64(player.R), float64(player.R), float64(player.R)))
+	player.playerObj = resolv.NewObject(x, y, float64(2*player.R), float64(2*player.R), PlayerTag)
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
 
@@ -343,4 +334,12 @@ func resolvDxDy(dx, dy float64, cvector vector.Vector) (x float64, y float64) {
 		y *= yDistance
 	}
 	return
+}
+
+func toSpaceXY(x, y float64) (float64, float64) {
+	return x + edgeWidth, y + edgeWidth
+}
+
+func fromSpaceXY(x, y float64) (float64, float64) {
+	return x - edgeWidth, y - edgeWidth
 }

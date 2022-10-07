@@ -20,12 +20,6 @@ const (
 	AVAX
 	MATIC
 
-	BTCInitialLen   = 6
-	ETHInitialLen   = 5
-	BNBInitialLen   = 4
-	AVAXInitialLen  = 3
-	MATICInitialLen = 2
-
 	EmptyTag = "Empty"
 	BTCTag   = "BTC"
 	ETHTag   = "ETH"
@@ -51,6 +45,15 @@ var (
 		BNBTag:   BNB,
 		AVAXTag:  AVAX,
 		MATICTag: MATIC,
+	}
+
+	CampSizeMap = map[Camp][2]int{
+		Empty: {0, 0},
+		AVAX:  {10, 10},
+		BNB:   {14, 10},
+		MATIC: {10, 10},
+		BTC:   {16, 10},
+		ETH:   {17, 10},
 	}
 )
 
@@ -83,43 +86,35 @@ func removeCampTags(tags []string) []string {
 	return ret
 }
 
-func initCamp(i, j, r, c int) Camp {
-	if i >= 0 && i < ETHInitialLen && j >= 0 && j < ETHInitialLen {
-		return ETH
+func initCamp(x, y, row, col int) Camp {
+	camp := Empty
+	for c := range CampTagMap {
+		if c == Empty {
+			continue
+		}
+		cx, cy := c.Center(row, col)
+		if y >= cy-CampSizeMap[c][1]/2 && y < cy+CampSizeMap[c][1]/2 && x >= cx-CampSizeMap[c][0]/2 && x < cx+CampSizeMap[c][0]/2 {
+			camp = c
+			break
+		}
 	}
-
-	if i >= 0 && i < BNBInitialLen && j < c && j >= c-BNBInitialLen {
-		return BNB
-	}
-
-	if i >= (r-BTCInitialLen)/2 && i < (r+BTCInitialLen)/2 && j >= (c-BTCInitialLen)/2 && j < (c+BTCInitialLen)/2 {
-		return BTC
-	}
-
-	if i >= r-AVAXInitialLen && i < r && j >= 0 && j < AVAXInitialLen {
-		return AVAX
-	}
-
-	if i >= r-MATICInitialLen && i < r && j >= c-MATICInitialLen && j < c {
-		return MATIC
-	}
-	return Empty
+	return camp
 }
 
 func (c Camp) Center(row, col int) (int, int) {
 	switch c {
 	case ETH:
-		return col - 2, row - 2
+		return col - CampSizeMap[ETH][0]/2, row - CampSizeMap[ETH][1]/2
 	case BNB:
-		return col / 2, 2
+		return col / 2, CampSizeMap[BNB][1] / 2
 	case AVAX:
-		return 2, 2
+		return CampSizeMap[AVAX][0] / 2, CampSizeMap[AVAX][1] / 2
 	case MATIC:
-		return col - 2, 2
+		return col - CampSizeMap[MATIC][0]/2, CampSizeMap[MATIC][1] / 2
 	case BTC:
-		return 2, row - 2
+		return CampSizeMap[BTC][0] / 2, row - CampSizeMap[BTC][1]/2
 	default:
-		return col / 2, row / 2
+		return col / 5, row / 5
 	}
 }
 

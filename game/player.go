@@ -36,7 +36,7 @@ func (p *Player) Serialize() []byte {
 	binary.Write(bytesBuffer, binary.BigEndian, uint16(p.R))
 	x, y := float64(0), float64(0)
 	if p.playerObj != nil {
-		x, y = p.playerObj.X-edgeWidth, p.playerObj.Y-edgeWidth
+		x, y = fromSpaceXY(p.playerObj.X, p.playerObj.Y)
 	}
 	binary.Write(bytesBuffer, binary.BigEndian, x)
 	binary.Write(bytesBuffer, binary.BigEndian, y)

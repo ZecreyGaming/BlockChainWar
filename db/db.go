@@ -31,7 +31,9 @@ type db struct {
 
 func NewClient(cfg Config) *Client {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable", cfg.Host, cfg.User, cfg.Password, cfg.Database, cfg.Port)
-	gdb, err := gorm.Open(postgres.Open(dsn))
+	gdb, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
 	if err != nil {
 		panic(err)
 	}

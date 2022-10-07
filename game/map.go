@@ -42,6 +42,7 @@ func (m *Map) Serialize() []byte {
 		res[offset] = n
 		offset++
 	}
+	// fmt.Println(hex.EncodeToString(res))
 	return res
 }
 
