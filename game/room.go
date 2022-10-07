@@ -8,6 +8,7 @@ import (
 
 	"github.com/COAOX/zecrey_warrior/config"
 	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/COAOX/zecrey_warrior/model"
 	"github.com/topfreegames/pitaya/constants"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
@@ -123,22 +124,20 @@ func (r *Room) onJoin(ctx context.Context) {
 		CellWidth:  cellWidth,
 		CellHeight: cellHeight,
 	}
+
+	pids := []uint64{}
 	r.game.Players.Range(func(key, value interface{}) bool {
-		if p, ok := value.(*Player); ok {
-			mi.Players = append(mi.Players, PlayerInfo{
-				ID:        p.ID,
-				Thumbnail: p.Thumbnail,
-			})
-		}
+		pids = append(pids, key.(uint64))
 		return true
 	})
+
+	mi.Players, _ = r.db.Player.List(pids...)
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
 }
 
 func (r *Room) onGameStop(winer Camp) {
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", r.game.GetGameStop())
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", r.game.GetGameStop())
-	r.app.GroupRemoveAll(r.ctx, config.GameRoomName)
 }
 
 func (r *Room) onCampVotesChange(camp Camp, votes int32) {
@@ -156,12 +155,7 @@ type MapInfo struct {
 	CellWidth  uint32 `json:"cell_width"`
 	CellHeight uint32 `json:"cell_height"`
 
-	Players []PlayerInfo `json:"players"`
-}
-
-type PlayerInfo struct {
-	ID        uint64 `json:"id"`
-	Thumbnail string `json:"thumbnail"`
+	Players []model.Player `json:"players"`
 }
 
 type CampVotesChange struct {

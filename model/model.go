@@ -10,6 +10,7 @@ type Player struct {
 	PlayerID  uint64 `gorm:"primaryKey" json:"player_id"`
 	Name      string `json:"player_name"`
 	Score     int    `json:"score"`
+	Thumbnail string `json:"thumbnail"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

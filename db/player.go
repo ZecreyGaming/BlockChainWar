@@ -21,6 +21,12 @@ func (p *player) Get(playerID uint64) (model.Player, error) {
 	return player, err
 }
 
+func (p *player) List(playeIDs ...uint64) ([]model.Player, error) {
+	var players []model.Player
+	err := p.db.Where("player_id in ?", playeIDs).Find(&players).Error
+	return players, err
+}
+
 func (p *player) ListRank(limit int) ([]model.Player, error) {
 	var players []model.Player
 	err := p.db.Order("score desc").Limit(limit).Find(&players).Error

@@ -122,6 +122,7 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 			PlayerID: msg.PlayerID,
 			Camp:     uint8(camp),
 		}); err != nil {
+			r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onPlayerJoin", p)
 			r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
 		}
 	}
