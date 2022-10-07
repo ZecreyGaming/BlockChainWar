@@ -255,6 +255,7 @@ func (g *Game) GetWinner() (Camp, int) {
 
 func (g *Game) Reset() {
 	g.Players = sync.Map{}
+	g.Items = sync.Map{}
 	g.frameNumber = 0
 	g.initMap()
 	g.initGameInfo()
