@@ -9,6 +9,6 @@
     "fps": 30,
     "game_round_interval":15,
     "frontend_type": "zecrey_warrior",
-    "item_frame_chance": 100,
+    "item_frame_chance": 1500,
     "game_duration": 600
 }

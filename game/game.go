@@ -32,7 +32,7 @@ const (
 	minCellSize = 5
 	edgeWidth   = minCellSize + lineWidth
 
-	playerInitialVelocity = 2
+	playerInitialVelocity = 1
 
 	GameNotStarted GameStatus = iota
 	GameRunning
@@ -319,7 +319,7 @@ func (g *Game) Update() {
 		}
 		return true
 	})
-	// g.TryAddItem()
+	g.TryAddItem()
 }
 
 func (g *Game) Size() uint32 {
