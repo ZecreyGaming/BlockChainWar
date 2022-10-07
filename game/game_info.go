@@ -16,6 +16,7 @@ func (g *Game) GetGameInfo() (GameInfo, error) {
 	v := GameInfo{
 		Game:      g.dbGame,
 		GameRound: g.dbGame.ID,
+		CampVotes: map[Camp]int32{},
 	}
 	offset, limit := 0, 100
 	v.HistoryMessage, err = g.db.Message.ListLatest(offset, limit)
