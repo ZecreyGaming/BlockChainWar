@@ -242,8 +242,10 @@ func (g *Game) GetWinner() (Camp, int) {
 
 func (g *Game) Reset() {
 	g.Players = sync.Map{}
+	g.frameNumber = 0
 	g.initMap()
 	g.initGameInfo()
+	g.resetRes()
 	g.GameStatus = GameRunning
 }
 

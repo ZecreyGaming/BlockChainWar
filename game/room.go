@@ -107,7 +107,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	r.app.GroupAddMember(ctx, config.GameRoomName, s.UID()) // add session to group
 
 	// notify others
-	r.onJoin(ctx)
+	r.onJoin(false)
 
 	// on session close, remove it from group
 	s.OnClose(func() {
@@ -117,12 +117,13 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	return &JoinResponse{Result: "success"}, nil
 }
 
-func (r *Room) onJoin(ctx context.Context) {
+func (r *Room) onJoin(replay bool) {
 	mi := MapInfo{
 		Row:        mapRow,
 		Column:     mapColumn,
 		CellWidth:  cellWidth,
 		CellHeight: cellHeight,
+		Replay:     replay,
 	}
 
 	pids := []uint64{}
@@ -132,12 +133,13 @@ func (r *Room) onJoin(ctx context.Context) {
 	})
 
 	mi.Players, _ = r.db.Player.List(pids...)
-	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onJoin", mi)
 }
 
 func (r *Room) onGameStart() {
 	info, _ := r.game.GetGameInfo()
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStart", info)
+	r.onJoin(true)
 }
 
 func (r *Room) onGameStop() {
@@ -162,6 +164,7 @@ type MapInfo struct {
 	CellHeight uint32 `json:"cell_height"`
 
 	Players []model.Player `json:"players"`
+	Replay  bool           `json:"replay"`
 }
 
 type CampVotesChange struct {
