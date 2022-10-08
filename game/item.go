@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/solarlune/resolv"
 )
@@ -89,11 +88,19 @@ func (g *Game) TryAddItem() {
 	}
 	x, y := g.Map.RandomSpaceXY()
 	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[ItemAccelerator]))
+	// item := &ItemObject{
+	// 	Id:   uint32(time.Now().UnixMilli()),
+	// 	X:    x,
+	// 	Y:    y,
+	// 	Item: ItemMap[ItemAccelerator],
+	// }
 	item := &ItemObject{
-		Id:   uint32(time.Now().Unix()),
-		X:    x,
-		Y:    y,
-		Item: ItemMap[ItemAccelerator],
+		Id: uint32(1),
+		X:  float64(1),
+		Y:  float64(1),
+		Item: Item{
+			Type: ItemAccelerator,
+		},
 	}
 	g.Items.LoadOrStore(item.Id, item)
 }
