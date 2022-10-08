@@ -93,7 +93,7 @@ func initCamp(x, y int) Camp {
 			continue
 		}
 		cx, cy := c.CenterCellIndex(mapRow, mapColumn)
-		if y >= cy-CampSizeMap[c][1]/2 && y < cy+CampSizeMap[c][1]/2 && x >= cx-CampSizeMap[c][0]/2 && x < cx+CampSizeMap[c][0]/2 {
+		if x-1 == cx && y == cy || x+1 == cx && y == cy || x == cx && y-1 == cy || x == cx && y+1 == cy {
 			camp = c
 			break
 		}
@@ -104,15 +104,15 @@ func initCamp(x, y int) Camp {
 func (c Camp) CenterCellIndex(row, col int) (int, int) {
 	switch c {
 	case ETH:
-		return col - CampSizeMap[ETH][0]/2, row - CampSizeMap[ETH][1]/2
+		return 36, 16
 	case BNB:
-		return col / 2, CampSizeMap[BNB][1] / 2
+		return 20, 2
 	case AVAX:
-		return CampSizeMap[AVAX][0] / 2, CampSizeMap[AVAX][1] / 2
+		return 4, 2
 	case MATIC:
-		return col - CampSizeMap[MATIC][0]/2, CampSizeMap[MATIC][1] / 2
+		return 36, 2
 	case BTC:
-		return CampSizeMap[BTC][0] / 2, row - CampSizeMap[BTC][1]/2
+		return 4, 16
 	default:
 		return col / 5, row / 5
 	}
