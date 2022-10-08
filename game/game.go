@@ -82,8 +82,6 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart
 	v.initGameInfo()
 	v.resetRes()
 
-	v.AddPlayer(11111, BTC)
-
 	return v
 }
 
