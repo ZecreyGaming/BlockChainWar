@@ -93,7 +93,7 @@ func initCamp(x, y int) Camp {
 			continue
 		}
 		cx, cy := c.CenterCellIndex(mapRow, mapColumn)
-		if x-1 == cx && y == cy || x+1 == cx && y == cy || x == cx && y-1 == cy || x == cx && y+1 == cy {
+		if (x == cx && y == cy) || (x-1 == cx && y == cy) || (x+1 == cx && y == cy) || (x == cx && y-1 == cy) || (x == cx && y+1 == cy) {
 			camp = c
 			break
 		}
