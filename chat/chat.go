@@ -124,6 +124,8 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 		}); err == nil {
 			r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onPlayerJoin", p)
 			r.game.AddPlayer(msg.PlayerID, game.DecideCamp(msg.Message))
+		} else {
+			zap.L().Error("add player vote failed", zap.Error(err))
 		}
 	}
 	return &MessageResponse{
