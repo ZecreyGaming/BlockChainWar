@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
+	"time"
+
+	"github.com/solarlune/resolv"
 )
 
 type ItemType uint8
@@ -33,7 +37,9 @@ var (
 		Name:      AcceleratorTag,
 		Thumbnail: "https://res.cloudinary.com/zecrey/image/upload/v1665155743/accelerator_t9vvkw.jpg",
 	}
-	ItemMap = map[ItemType]Item{}
+	ItemMap = map[ItemType]Item{
+		ItemAccelerator: Accelerator,
+	}
 
 	AllItems = []Item{
 		Accelerator,
@@ -75,4 +81,19 @@ func itemTagsToId(tags []string) uint32 {
 		}
 	}
 	return id
+}
+
+func (g *Game) TryAddItem() {
+	if g.GameStatus != GameRunning || rand.Intn(g.cfg.ItemFrameChance) != 1 {
+		return
+	}
+	x, y := g.Map.RandomSpaceXY()
+	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[ItemAccelerator]))
+	item := &ItemObject{
+		Id:   uint32(time.Now().Unix()),
+		X:    x,
+		Y:    y,
+		Item: ItemMap[ItemAccelerator],
+	}
+	g.Items.LoadOrStore(item.Id, item)
 }

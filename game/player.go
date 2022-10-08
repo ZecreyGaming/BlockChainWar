@@ -3,6 +3,8 @@ package game
 import (
 	"bytes"
 	"encoding/binary"
+	"math"
+	"math/rand"
 
 	"github.com/solarlune/resolv"
 )
@@ -89,4 +91,30 @@ func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (floa
 		rx *= -1
 	}
 	return rx, ry
+}
+
+func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
+	// if g.GameStatus != GameRunning {
+	// 	return nil
+	// }
+	if camp == Empty {
+		return nil
+	}
+	g.incrCampVotes(camp)
+	x, y := cellIndexToSpaceXY(camp.CenterCellIndex(mapRow, mapColumn))
+
+	ang := rand.Float64() * 2 * math.Pi
+	player := &Player{
+		ID:   playerID,
+		Camp: camp,
+		R:    defaultPlayerPixelR,
+		Vx:   math.Cos(ang) * playerInitialVelocity,
+		Vy:   math.Sin(ang) * playerInitialVelocity,
+	}
+	player.playerObj = resolv.NewObject(x, y, float64(2*player.R), float64(2*player.R), PlayerTag)
+	g.space.Add(player.playerObj)
+	g.Players.Store(playerID, player)
+
+	// fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
+	return player
 }

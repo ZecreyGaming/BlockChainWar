@@ -53,7 +53,7 @@ func (m *Map) OutofMap(x, y float64) bool {
 }
 
 func (m *Map) RandomSpaceXY() (float64, float64) {
-	x := rand.Intn(mapColumn) * (cellWidth + lineWidth)
-	y := rand.Intn(mapRow) * (cellHeight + lineWidth)
+	x := rand.Intn(mapColumn)*(cellWidth+lineWidth) + edgeWidth
+	y := rand.Intn(mapRow)*(cellHeight+lineWidth) + edgeWidth
 	return float64(x), float64(y)
 }

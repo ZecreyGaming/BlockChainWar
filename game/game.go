@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"math"
-	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -298,10 +296,10 @@ func (g *Game) Update() {
 						}
 					} else if collisionObj.HasTags(ItemTag) {
 						if collisionObj.HasTags(AcceleratorTag) {
-							player.Vx *= 1.2
-							player.Vy *= 1.2
-							remainX *= 1.2
-							remainY *= 1.2
+							player.Vx *= 1.5
+							player.Vy *= 1.5
+							remainX *= 1.5
+							remainY *= 1.5
 							id := itemTagsToId(collisionObj.Tags())
 							g.Items.Delete(id)
 							g.space.Remove(collisionObj)
@@ -332,47 +330,6 @@ func (g *Game) Size() uint32 {
 		return true
 	})
 	return 4 + 4 + g.Map.Size() + pLen
-}
-
-func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
-	// if g.GameStatus != GameRunning {
-	// 	return nil
-	// }
-	if camp == Empty {
-		return nil
-	}
-	g.incrCampVotes(camp)
-	x, y := cellIndexToSpaceXY(camp.CenterCellIndex(mapRow, mapColumn))
-
-	ang := rand.Float64() * 2 * math.Pi
-	player := &Player{
-		ID:   playerID,
-		Camp: camp,
-		R:    defaultPlayerPixelR,
-		Vx:   math.Cos(ang) * playerInitialVelocity,
-		Vy:   math.Sin(ang) * playerInitialVelocity,
-	}
-	player.playerObj = resolv.NewObject(x, y, float64(2*player.R), float64(2*player.R), PlayerTag)
-	g.space.Add(player.playerObj)
-	g.Players.Store(playerID, player)
-
-	// fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
-	return player
-}
-
-func (g *Game) TryAddItem() {
-	if g.GameStatus != GameRunning && rand.Intn(g.cfg.ItemFrameChance) != 1 {
-		return
-	}
-	x, y := g.Map.RandomSpaceXY()
-	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[ItemAccelerator]))
-	item := &ItemObject{
-		Id:   uint32(time.Now().Unix()),
-		X:    x,
-		Y:    y,
-		Item: ItemMap[ItemAccelerator],
-	}
-	g.Items.LoadOrStore(item.Id, item)
 }
 
 func (g *Game) incrCampVotes(camp Camp) {
