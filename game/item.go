@@ -84,7 +84,7 @@ func itemTagsToId(tags []string) uint32 {
 }
 
 func (g *Game) TryAddItem() {
-	if g.GameStatus != GameRunning && rand.Intn(g.cfg.ItemFrameChance) != 1 {
+	if g.GameStatus != GameRunning || rand.Intn(g.cfg.ItemFrameChance) != 1 {
 		return
 	}
 	x, y := g.Map.RandomSpaceXY()
