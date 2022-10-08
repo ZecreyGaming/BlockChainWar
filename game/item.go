@@ -13,7 +13,7 @@ import (
 type ItemType uint8
 
 const (
-	itemPixelR = 5
+	itemPixelR = 15
 
 	ItemAccelerator ItemType = iota
 	ItemTag                  = "ITEM"
