@@ -82,12 +82,6 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart
 	v.initGameInfo()
 	v.resetRes()
 
-	v.AddPlayer(11111, ETH)
-	v.AddPlayer(22222, BNB)
-	v.AddPlayer(33333, BTC)
-	v.AddPlayer(44444, AVAX)
-	v.AddPlayer(55555, MATIC)
-
 	return v
 }
 
@@ -156,11 +150,6 @@ func (g *Game) nextRound() {
 	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
 	g.Reset()
 
-	g.AddPlayer(11111, ETH)
-	g.AddPlayer(22222, BNB)
-	g.AddPlayer(33333, BTC)
-	g.AddPlayer(44444, AVAX)
-	g.AddPlayer(55555, MATIC)
 	g.onGameStart(g.ctx)
 	g.nextRoundChan <- struct{}{}
 }
