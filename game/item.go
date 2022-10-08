@@ -63,9 +63,14 @@ func (p *ItemObject) Serialize() []byte {
 	bytesBuffer := bytes.NewBuffer(make([]byte, 0))
 	binary.Write(bytesBuffer, binary.BigEndian, p.Id)
 	binary.Write(bytesBuffer, binary.BigEndian, uint8(p.Item.Type))
-	binary.Write(bytesBuffer, binary.BigEndian, p.X)
-	binary.Write(bytesBuffer, binary.BigEndian, p.Y)
+	x, y := space2MapXY(p.Center())
+	binary.Write(bytesBuffer, binary.BigEndian, x)
+	binary.Write(bytesBuffer, binary.BigEndian, y)
 	return bytesBuffer.Bytes()
+}
+
+func (i *ItemObject) Center() (float64, float64) {
+	return i.X + float64(itemPixelR), i.Y + float64(itemPixelR)
 }
 
 func itemIdToTag(Id uint32) string {
