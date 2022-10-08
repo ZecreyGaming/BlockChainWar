@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -62,6 +63,7 @@ func (r *Room) AfterInit() {
 			default:
 				s := <-stateChan
 				<-ticker
+				fmt.Println("update!!", time.Now())
 				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, config.GameRoomName, "onUpdate", GameUpdate{Data: s})
 			}
 		}

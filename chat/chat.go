@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -93,6 +94,8 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 	if err != nil {
 		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "get game info", "error": err.Error()})
 	}
+
+	fmt.Println(info)
 
 	return &JoinResponse{Result: "success", GameInfo: info}, nil
 }
