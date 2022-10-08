@@ -46,8 +46,5 @@ func (p *player) IncreaseScore(gameID uint, campID uint8) error {
 }
 
 func (p *player) AddVote(playerVotes *model.PlayerVote) error {
-	return p.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "game_id"}, {Name: "player_id"}},
-		DoNothing: true,
-	}).Create(playerVotes).Error
+	return p.db.Create(playerVotes).Error
 }
