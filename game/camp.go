@@ -104,15 +104,15 @@ func initCamp(x, y int) Camp {
 func (c Camp) CenterCellIndex(row, col int) (int, int) {
 	switch c {
 	case ETH:
-		return 36, 16
+		return 37, 27
 	case BNB:
 		return 20, 2
 	case AVAX:
-		return 4, 2
+		return 2, 2
 	case MATIC:
-		return 36, 2
+		return 37, 2
 	case BTC:
-		return 4, 16
+		return 2, 27
 	default:
 		return col / 5, row / 5
 	}
