@@ -211,7 +211,6 @@ func (g *Game) Serialize() ([]byte, error) {
 	binary.BigEndian.PutUint32(b, itemNumber)
 	bytesBuf.Write(b)
 	bytesBuf.Write(itemBytes)
-
 	return bytesBuf.Bytes(), nil
 }
 

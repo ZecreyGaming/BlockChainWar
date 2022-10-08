@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/solarlune/resolv"
 )
@@ -83,24 +84,17 @@ func itemTagsToId(tags []string) uint32 {
 }
 
 func (g *Game) TryAddItem() {
-	if g.GameStatus != GameRunning || rand.Intn(g.cfg.ItemFrameChance) != 1 {
+	if g.GameStatus != GameRunning && rand.Intn(g.cfg.ItemFrameChance) != 1 {
 		return
 	}
 	x, y := g.Map.RandomSpaceXY()
 	g.space.Add(resolv.NewObject(x, y, float64(2*itemPixelR), float64(2*itemPixelR), ItemTag, ItemTagMap[ItemAccelerator]))
-	// item := &ItemObject{
-	// 	Id:   uint32(time.Now().UnixMilli()),
-	// 	X:    x,
-	// 	Y:    y,
-	// 	Item: ItemMap[ItemAccelerator],
-	// }
 	item := &ItemObject{
-		Id: uint32(1),
-		X:  float64(1),
-		Y:  float64(1),
-		Item: Item{
-			Type: ItemAccelerator,
-		},
+		Id:   uint32(time.Now().UnixMilli()),
+		X:    x,
+		Y:    y,
+		Item: ItemMap[ItemAccelerator],
 	}
+
 	g.Items.LoadOrStore(item.Id, item)
 }
