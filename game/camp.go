@@ -49,11 +49,11 @@ var (
 
 	CampSizeMap = map[Camp][2]int{
 		Empty: {0, 0},
-		AVAX:  {10, 10},
-		BNB:   {14, 10},
-		MATIC: {10, 10},
-		BTC:   {16, 10},
-		ETH:   {17, 10},
+		AVAX:  {6, 10},
+		BNB:   {10, 10},
+		MATIC: {8, 10},
+		BTC:   {18, 10},
+		ETH:   {14, 10},
 	}
 )
 
