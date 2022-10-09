@@ -115,6 +115,7 @@ func (g *Game) initGameInfo() {
 	if err := g.db.Game.Create(g.dbGame); err != nil {
 		zap.L().Error("failed to create game", zap.Error(err))
 	}
+	fmt.Println("init game", g.dbGame)
 }
 
 func (g *Game) resetRes() {

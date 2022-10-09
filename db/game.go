@@ -1,10 +1,15 @@
 package db
 
-import "github.com/COAOX/zecrey_warrior/model"
+import (
+	"fmt"
+
+	"github.com/COAOX/zecrey_warrior/model"
+)
 
 type game db
 
 func (g *game) Create(game *model.Game) error {
+	fmt.Println("on create game")
 	return g.db.Create(game).Error
 }
 
