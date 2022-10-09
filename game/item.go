@@ -35,7 +35,7 @@ var (
 	Accelerator = Item{
 		Type:      ItemAccelerator,
 		Name:      AcceleratorTag,
-		Thumbnail: "https://res.cloudinary.com/zecrey/image/upload/v1665155743/accelerator_t9vvkw.jpg",
+		Thumbnail: "https://res.cloudinary.com/zecrey/image/upload/v1665310283/1054990_rocket_spacecraft_spaceship_icon_gtia85.png",
 	}
 	ItemMap = map[ItemType]Item{
 		ItemAccelerator: Accelerator,
