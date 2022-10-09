@@ -78,6 +78,8 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart
 		nextRoundChan:     make(chan struct{}, 1),
 	}
 
+	zap.L().Debug("game init")
+
 	v.initMap()
 	v.initGameInfo()
 	v.resetRes()
@@ -115,7 +117,7 @@ func (g *Game) initGameInfo() {
 	if err := g.db.Game.Create(g.dbGame); err != nil {
 		zap.L().Error("failed to create game", zap.Error(err))
 	}
-	fmt.Println("init game", g.dbGame)
+	zap.L().Debug("game info init", zap.Uint("game_id", g.dbGame.ID))
 }
 
 func (g *Game) resetRes() {
