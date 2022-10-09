@@ -266,9 +266,6 @@ func (g *Game) Reset() {
 }
 
 func (g *Game) Update() {
-	if g.GameStatus != GameRunning {
-		return
-	}
 	g.Players.Range(func(key, value interface{}) bool {
 		if player, ok := value.(*Player); ok && player != nil && player.playerObj != nil {
 			remainX, remainY := player.Vx, player.Vy
