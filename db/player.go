@@ -48,3 +48,9 @@ func (p *player) IncreaseScore(gameID uint, campID uint8) error {
 func (p *player) AddVote(playerVotes *model.PlayerVote) error {
 	return p.db.Create(playerVotes).Error
 }
+
+func (p *player) GetWinnerVotes(gameId uint, winner uint8) int64 {
+	var count int64
+	p.db.Model(&model.PlayerVote{}).Where("game_id = ? AND camp = ?", gameId, winner).Count(&count)
+	return count
+}
