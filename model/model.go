@@ -7,13 +7,14 @@ import (
 )
 
 type Player struct {
-	PlayerID  uint64 `gorm:"primaryKey" json:"player_id"`
-	Name      string `json:"player_name"`
-	Score     int    `json:"score"`
-	Thumbnail string `json:"thumbnail"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	PlayerID    uint64 `gorm:"primaryKey" json:"player_id"`
+	Name        string `json:"player_name"`
+	L2publicKey string `json:"l2public_key"`
+	Score       int    `json:"score"`
+	Thumbnail   string `json:"thumbnail"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type PlayerVote struct {
@@ -43,9 +44,10 @@ type Game struct {
 
 type Message struct {
 	gorm.Model
-	Message  string `json:"message"`
-	PlayerID uint64 `json:"player_id"`
-	Player   Player `gorm:"foreignKey:PlayerID;references:PlayerID" json:"player"`
+	Message       string `json:"message"`
+	SignedMessage string `json:"signed_message"`
+	PlayerID      uint64 `json:"player_id"`
+	Player        Player `gorm:"foreignKey:PlayerID;references:PlayerID" json:"player"`
 }
 
 const (

@@ -84,11 +84,11 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart
 	v.initGameInfo()
 	v.resetRes()
 
-	// v.AddPlayer(11111, BTC)
-	// v.AddPlayer(22222, ETH)
-	// v.AddPlayer(33333, BNB)
-	// v.AddPlayer(44444, AVAX)
-	// v.AddPlayer(55555, MATIC)
+	//v.AddPlayer(11111, BTC)
+	//v.AddPlayer(22222, ETH)
+	//v.AddPlayer(33333, BNB)
+	//v.AddPlayer(44444, AVAX)
+	//v.AddPlayer(55555, MATIC)
 
 	return v
 }
@@ -129,6 +129,9 @@ func (g *Game) GetGameID() uint {
 }
 
 func (g *Game) start() <-chan []byte {
+	//wait for the first people enter,and then call the "StartRound" method
+	g.stopSignalChan <- g.nextRoundChan
+	//now start
 	g.GameStatus = GameRunning
 	stateChan := make(chan []byte)
 	go func() {
@@ -140,7 +143,7 @@ func (g *Game) start() <-chan []byte {
 			case <-g.ctx.Done():
 				return
 			case <-gameTime.C:
-				g.nextRound()
+				g.endRound() //game ending
 				gameTime.Reset(time.Duration(g.cfg.GameDuration) * time.Second)
 			default:
 				stateChan <- s
@@ -150,23 +153,38 @@ func (g *Game) start() <-chan []byte {
 	return stateChan
 }
 
-func (g *Game) nextRound() {
+func (g *Game) endRound() {
 	g.Save()
 	g.GameStatus = GameStopped
 	g.stopSignalChan <- g.nextRoundChan
 	g.onGameStop(g.ctx)
 	// wait game to start
 	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
-	g.Reset()
+	//g.Reset()
+	//
+	//// g.AddPlayer(11111, BTC)
+	//// g.AddPlayer(22222, ETH)
+	//// g.AddPlayer(33333, BNB)
+	//// g.AddPlayer(44444, AVAX)
+	//// g.AddPlayer(55555, MATIC)
+	//
+	//g.onGameStart(g.ctx)
+	//g.nextRoundChan <- struct{}{}
+}
 
-	// g.AddPlayer(11111, BTC)
-	// g.AddPlayer(22222, ETH)
-	// g.AddPlayer(33333, BNB)
-	// g.AddPlayer(44444, AVAX)
-	// g.AddPlayer(55555, MATIC)
+func (g *Game) StartRound() {
+	if g.GameStatus == GameStopped || g.GameStatus == GameNotStarted {
+		g.Reset()
 
-	g.onGameStart(g.ctx)
-	g.nextRoundChan <- struct{}{}
+		// g.AddPlayer(11111, BTC)
+		// g.AddPlayer(22222, ETH)
+		// g.AddPlayer(33333, BNB)
+		// g.AddPlayer(44444, AVAX)
+		// g.AddPlayer(55555, MATIC)
+
+		g.onGameStart(g.ctx)
+		g.nextRoundChan <- struct{}{}
+	}
 }
 
 // frame number: 4 bytes

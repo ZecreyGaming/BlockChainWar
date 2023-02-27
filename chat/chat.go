@@ -2,6 +2,8 @@ package chat
 
 import (
 	"context"
+	"fmt"
+	sdk "github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"strconv"
 	"strings"
 
@@ -17,11 +19,11 @@ import (
 
 type Room struct {
 	component.Base
-	app pitaya.Pitaya
-	cfg *config.Config
-	db  *db.Client
-
-	game *game.Game
+	app       pitaya.Pitaya
+	cfg       *config.Config
+	db        *db.Client
+	sdkClient *sdk.Client
+	game      *game.Game
 }
 
 func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, game *game.Game) {
@@ -60,6 +62,7 @@ type NewUser struct {
 
 // Join room
 func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, error) {
+	fmt.Println(fmt.Sprintf("Join player%v", player))
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
@@ -67,7 +70,12 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 	if err != nil && err != constants.ErrSessionAlreadyBound {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
-
+	//set playerPk
+	playerInfo, err := sdk.GetAccountInfo(player.Name)
+	if err != nil {
+		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "GetAccountInfo fail", "error": err.Error()})
+	}
+	player.L2publicKey = playerInfo.Account.AccountPk
 	// offset, limit := 0, 100
 	// // get last 30 messages
 	// messages, err := r.db.Message.ListLatest(offset, limit)
@@ -103,7 +111,15 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))
 	}
-
+	b, err := sdk.VerifyMessage(msg.Player.L2publicKey, msg.SignedMessage, msg.Message)
+	if err != nil {
+		zap.L().Error("sdk.VerifyMessage err failed", zap.Error(err))
+		return nil, pitaya.Error(err, "RH-400", map[string]string{"failed": fmt.Sprintf("sdk.VerifyMessage failed err:%s", err)})
+	}
+	if !b {
+		zap.L().Error("sdk.VerifyMessage  failed", zap.Error(err))
+		return nil, pitaya.Error(err, "RH-400", map[string]string{"failed": fmt.Sprintf("sdk.VerifyMessage  failed")})
+	}
 	p, err := r.db.Player.Get(msg.PlayerID)
 	if err != nil {
 		zap.L().Error("get player failed", zap.Error(err))

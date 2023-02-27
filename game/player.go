@@ -53,9 +53,9 @@ func (p *Player) GetCenter() (float64, float64) {
 	return p.playerObj.X + float64(p.R), p.playerObj.Y + float64(p.R)
 }
 
-func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (float64, float64) {
+func (p *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (float64, float64) {
 	// Edge Collision
-	nx, ny := player.playerObj.X+dx, player.playerObj.Y+dy
+	nx, ny := p.playerObj.X+dx, p.playerObj.Y+dy
 	rx -= dx
 	ry -= dy
 	// if nx >= cell.X && nx <= cell.X+cell.W {
@@ -82,13 +82,13 @@ func (player *Player) rebound(dx, dy, rx, ry float64, cell *resolv.Object) (floa
 	// player.Vy *= -1
 	// return -rx, -ry
 
-	if ny <= cell.Y-float64(2*player.R) || ny >= cell.Y+cell.H {
-		player.Vy *= -1
+	if ny <= cell.Y-float64(2*p.R) || ny >= cell.Y+cell.H {
+		p.Vy *= -1
 		ry *= -1
 	}
 
-	if nx <= cell.X-float64(2*player.R) || nx >= cell.X+cell.W {
-		player.Vx *= -1
+	if nx <= cell.X-float64(2*p.R) || nx >= cell.X+cell.W {
+		p.Vx *= -1
 		rx *= -1
 	}
 	return rx, ry
@@ -115,6 +115,7 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	player.playerObj = resolv.NewObject(x, y, float64(2*player.R), float64(2*player.R), PlayerTag)
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
+	g.StartRound() //start when
 
 	fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player
