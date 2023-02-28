@@ -10,7 +10,7 @@ func Test_client_SignMessage(t *testing.T) {
 	seedKey := "alice seed...."
 	rawMessage := "eth"
 	nftPrefix := "your companyName"
-	c, err := Client(name, seedKey, nftPrefix)
+	c, err := GetClient(name, seedKey, nftPrefix, 6)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -18,7 +18,7 @@ func Test_client_SignMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := c.VerifyMessage(eddsaSig, rawMessage)
+	b, err := VerifyMessage(c.l2pk, eddsaSig, rawMessage)
 	if err != nil {
 		t.Fatal(err)
 	}

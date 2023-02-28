@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"strconv"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ type GameUpdate struct {
 	Data []byte `json:"data"`
 }
 
-func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
+func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, sdkClient *zecreyface.Client) *Game {
 	err := app.GroupCreate(context.Background(), config.GameRoomName)
 	if err != nil {
 		panic(err)
@@ -40,7 +41,7 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config) *Game {
 		cfg: cfg,
 	}
 	r.ctx, r.tickerCancel = context.WithCancel(context.Background())
-	r.game = NewGame(r.ctx, cfg, db, r.onGameStart, r.onGameStop, r.onCampVotesChange)
+	r.game = NewGame(r.ctx, cfg, db, sdkClient, r.onGameStart, r.onGameStop, r.onCampVotesChange)
 	app.Register(r,
 		component.WithName(config.GameRoomName),
 		component.WithNameFunc(strings.ToLower),
@@ -55,8 +56,8 @@ func (r *Room) AfterInit() {
 		ticker := time.NewTicker(time.Duration(1000/r.cfg.FPS) * time.Millisecond).C
 		for {
 			select {
-			case nextRoundChan := <-r.game.stopSignalChan:
-				<-nextRoundChan
+			//case nextRoundChan := <-r.game.stopSignalChan:
+			//	<-nextRoundChan
 			case <-r.ctx.Done():
 				return
 			default:

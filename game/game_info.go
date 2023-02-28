@@ -13,9 +13,14 @@ type GameInfo struct {
 
 func (g *Game) GetGameInfo() (GameInfo, error) {
 	var err error
+	var GameRound uint
+	if g.dbGame != nil {
+		GameRound = g.dbGame.ID
+	}
+
 	v := GameInfo{
 		Game:      g.dbGame,
-		GameRound: g.dbGame.ID,
+		GameRound: GameRound,
 		CampVotes: map[Camp]int32{},
 	}
 	offset, limit := 0, 100

@@ -1,6 +1,8 @@
 package game
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 const (
 	mapRow     = 30
@@ -40,7 +42,7 @@ func (m *Map) Serialize() []byte {
 		res[offset] = n
 		offset++
 	}
-	// fmt.Println(hex.EncodeToString(res))
+	//fmt.Println(hex.EncodeToString(res))
 	return res
 }
 

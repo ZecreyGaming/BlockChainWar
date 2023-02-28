@@ -1,46 +1,46 @@
 package zecreyface
 
 import (
+	"fmt"
 	zecreyface "github.com/Zecrey-Labs/zecrey-marketplace-go-sdk/sdk"
 )
 
 type Client struct {
-	z                   *zecreyface.Client
-	nftPrefix           string
-	acccountName        string
-	seed                string
-	l2pk                string
-	defaultCollectionId int64
+	z            *zecreyface.Client
+	nftPrefix    string
+	acccountName string
+	seed         string
+	l2pk         string
+	collectionId int64
 }
 
-func GetClient(accountName, seed, nftPrefix string) (*Client, error) {
+func GetClient(accountName, seed, nftPrefix string, collectionId int64) (*Client, error) {
 	z, err := zecreyface.NewClient(accountName, seed)
 	if err != nil {
 		return nil, err
 	}
 	_, l2pk, seed := z.GetMyInfo()
-	Id, err := zecreyface.GetDefaultCollectionId(accountName)
-	if err != nil {
-		return nil, err
-	}
-
+	//Id, err := zecreyface.GetDefaultCollectionId(accountName)
+	//if err != nil {
+	//	return nil, err
+	//}
 	return &Client{
-		z:                   z,
-		acccountName:        accountName,
-		seed:                seed,
-		l2pk:                l2pk,
-		defaultCollectionId: Id,
-		nftPrefix:           nftPrefix}, nil
+		z:            z,
+		acccountName: accountName,
+		seed:         seed,
+		l2pk:         l2pk,
+		collectionId: collectionId,
+		nftPrefix:    nftPrefix}, nil
 }
 
-func (c *Client) MintNft(Name string, Description string) (*zecreyface.RespCreateAsset, error) {
-	result, err := zecreyface.UploadMedia("./zecrey_warrior/game/media/MedalOfVictory.png")
+func (c *Client) MintNft(collectionId int64, toAccountName string, nftName string, nftDescription string) (*zecreyface.RespCreateAsset, error) {
+	result, err := zecreyface.UploadMedia("./game/media/MedalOfVictory.png")
 	if err != nil {
 		return nil, err
 	}
-	nftInfo, err := c.z.MintNft(c.defaultCollectionId,
-		"", Name,
-		Description, result.PublicId,
+	nftInfo, err := c.z.MintNft(collectionId, toAccountName,
+		fmt.Sprintf("https://res.cloudinary.com/zecrey/image/upload/%s", result.PublicId), nftName,
+		nftDescription, result.PublicId,
 		"[]", "[]", "[]")
 	if err != nil {
 		return nil, err

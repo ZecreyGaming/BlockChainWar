@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,6 +41,7 @@ const (
 type Game struct {
 	db                *db.Client
 	cfg               *config.Config
+	sdkClient         *zecreyface.Client
 	onGameStart       func(context.Context)
 	onGameStop        func(context.Context)
 	onCampVotesChange func(camp Camp, votes int32)
@@ -60,12 +62,15 @@ type Game struct {
 
 	nextRoundChan  chan struct{}
 	stopSignalChan chan chan struct{}
+
+	toRewardName string
 }
 
-func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart func(context.Context), onGameStop func(context.Context), onCampVotesChange func(camp Camp, votes int32)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *zecreyface.Client, onGameStart func(context.Context), onGameStop func(context.Context), onCampVotesChange func(camp Camp, votes int32)) *Game {
 	v := &Game{
 		ctx:               ctx,
 		db:                db,
+		sdkClient:         sdkClient,
 		cfg:               cfg,
 		campVotes:         sync.Map{},
 		Players:           sync.Map{},
@@ -81,7 +86,7 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, onGameStart
 	zap.L().Debug("game init")
 
 	v.initMap()
-	v.initGameInfo()
+	//v.initGameInfo()
 	v.resetRes()
 
 	//v.AddPlayer(11111, BTC)
@@ -130,9 +135,9 @@ func (g *Game) GetGameID() uint {
 
 func (g *Game) start() <-chan []byte {
 	//wait for the first people enter,and then call the "StartRound" method
-	g.stopSignalChan <- g.nextRoundChan
+	//g.stopSignalChan <- g.nextRoundChan
 	//now start
-	g.GameStatus = GameRunning
+	g.GameStatus = GameNotStarted
 	stateChan := make(chan []byte)
 	go func() {
 		gameTime := time.NewTimer(time.Duration(g.cfg.GameDuration) * time.Second)
@@ -140,11 +145,13 @@ func (g *Game) start() <-chan []byte {
 			s, _ := g.Serialize()
 			g.Update()
 			select {
+			case <-g.nextRoundChan:
+				gameTime.Reset(time.Duration(g.cfg.GameDuration) * time.Second)
 			case <-g.ctx.Done():
 				return
 			case <-gameTime.C:
 				g.endRound() //game ending
-				gameTime.Reset(time.Duration(g.cfg.GameDuration) * time.Second)
+
 			default:
 				stateChan <- s
 			}
@@ -154,12 +161,23 @@ func (g *Game) start() <-chan []byte {
 }
 
 func (g *Game) endRound() {
+	if g.GameStatus == GameStopped || g.GameStatus == GameNotStarted {
+		return
+	}
 	g.Save()
 	g.GameStatus = GameStopped
-	g.stopSignalChan <- g.nextRoundChan
+	//g.stopSignalChan <- g.nextRoundChan
 	g.onGameStop(g.ctx)
+	nftInfo, err := g.sdkClient.MintNft(g.cfg.CollectionId, g.toRewardName,
+		fmt.Sprintf("%s%d", g.cfg.NftPrefix, time.Now().UnixMilli()),
+		fmt.Sprintf("zecrey MintNft %d", time.Now().UnixMilli()))
+	if err != nil {
+		zap.L().Error("MintNft", zap.Error(err))
+	}
+	fmt.Println(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset))
+	zap.L().Debug(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset.CollectionId))
 	// wait game to start
-	<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
+	//<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
 	//g.Reset()
 	//
 	//// g.AddPlayer(11111, BTC)
@@ -172,9 +190,10 @@ func (g *Game) endRound() {
 	//g.nextRoundChan <- struct{}{}
 }
 
-func (g *Game) StartRound() {
+func (g *Game) StartRound(toRewardName string) {
 	if g.GameStatus == GameStopped || g.GameStatus == GameNotStarted {
 		g.Reset()
+		g.toRewardName = toRewardName
 
 		// g.AddPlayer(11111, BTC)
 		// g.AddPlayer(22222, ETH)
@@ -187,13 +206,15 @@ func (g *Game) StartRound() {
 	}
 }
 
-// frame number: 4 bytes
-// map size: 4 bytes
-// map: map size bytes
-// player number: 4 bytes
-// players: 26 * len(players) bytes
-// item number: 4 bytes
-// items: 21 * items number bytes
+/*
+	frame number: 4 bytes
+	map size: 4 bytes
+	map: map size bytes
+	player number: 4 bytes
+	players: 26 * len(players) bytes
+	item number: 4 bytes
+	items: 21 * items number bytes
+*/
 func (g *Game) Serialize() ([]byte, error) {
 	atomic.AddUint32(&g.frameNumber, 1)
 	bytesBuf := bytes.NewBuffer([]byte{})
@@ -209,7 +230,7 @@ func (g *Game) Serialize() ([]byte, error) {
 	bytesBuf.Write(g.Map.Serialize())
 
 	playerNumber := uint32(0)
-	playerBytes := []byte{}
+	var playerBytes []byte
 	g.Players.Range(func(key, value interface{}) bool { // O(N) call, but since players are not that many, it's fine
 		if v, ok := value.(*Player); ok && v != nil {
 			playerNumber++
@@ -222,7 +243,7 @@ func (g *Game) Serialize() ([]byte, error) {
 	bytesBuf.Write(playerBytes)
 
 	itemNumber := uint32(0)
-	itemBytes := []byte{}
+	var itemBytes []byte
 	g.Items.Range(func(key, value interface{}) bool { // O(N) call, but since items are not that many, it's fine
 		if v, ok := value.(*ItemObject); ok && v != nil {
 			itemNumber++

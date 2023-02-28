@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	sdk "github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"log"
 	"net/http"
 	"time"
@@ -37,9 +38,12 @@ func main() {
 	defer app.Shutdown()
 
 	database := db.NewClient(cfg.Database)
-
+	sdkClient, err := sdk.GetClient(cfg.AccountName, cfg.Seed, cfg.NftPrefix, cfg.CollectionId)
+	if err != nil {
+		panic(err)
+	}
 	// register game and chat
-	g := game.RegistRoom(app, database, cfg)
+	g := game.RegistRoom(app, database, cfg, sdkClient)
 	chat.RegistRoom(app, database, cfg, g)
 
 	log.SetFlags(log.LstdFlags | log.Llongfile)

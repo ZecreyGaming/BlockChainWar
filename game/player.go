@@ -115,7 +115,6 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	player.playerObj = resolv.NewObject(x, y, float64(2*player.R), float64(2*player.R), PlayerTag)
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
-	g.StartRound() //start when
 
 	fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player

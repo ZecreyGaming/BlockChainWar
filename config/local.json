@@ -1,14 +1,18 @@
 {
-    "database": {
-        "host": "localhost",
-        "port": 5433,
-        "user": "root",
-        "password": "public",
-        "database": "zecrey_warrior"
-    },
-    "fps": 30,
-    "game_round_interval":15,
-    "frontend_type": "zecrey_warrior",
-    "item_frame_chance": 500,
-    "game_duration": 600
+  "database": {
+    "host": "localhost",
+    "port": 5433,
+    "user": "root",
+    "password": "public",
+    "database": "zecrey_warrior"
+  },
+  "fps": 30,
+  "game_round_interval": 10000,
+  "frontend_type": "zecrey_warrior",
+  "item_frame_chance": 500,
+  "game_duration": 20,
+  "account_name": "alice",
+  "seed": "",
+  "nft_prefix": "zecrey",
+  "collection_id": 6
 }

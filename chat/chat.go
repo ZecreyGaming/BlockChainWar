@@ -70,8 +70,10 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 	if err != nil && err != constants.ErrSessionAlreadyBound {
 		return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
 	}
+	//delete .zec suffix use zecrey nft sdk not need add .zec suffix will add it automatic
+	name := strings.TrimSuffix(player.Name, ".zec")
 	//set playerPk
-	playerInfo, err := sdk.GetAccountInfo(player.Name)
+	playerInfo, err := sdk.GetAccountInfo(name)
 	if err != nil {
 		return nil, pitaya.Error(err, "RH-500", map[string]string{"failed": "GetAccountInfo fail", "error": err.Error()})
 	}
@@ -111,7 +113,12 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))
 	}
-	b, err := sdk.VerifyMessage(msg.Player.L2publicKey, msg.SignedMessage, msg.Message)
+	player, err := r.db.Player.Get(msg.PlayerID)
+	if err != nil {
+		zap.L().Error("player not join game can`t send message", zap.Error(err))
+		return nil, pitaya.Error(err, "RH-400", map[string]string{"failed": fmt.Sprintf("player(%d) not join game can`t send message err=%s", msg.Player.PlayerID, err)})
+	}
+	b, err := sdk.VerifyMessage(player.L2publicKey, msg.SignedMessage, msg.Message)
 	if err != nil {
 		zap.L().Error("sdk.VerifyMessage err failed", zap.Error(err))
 		return nil, pitaya.Error(err, "RH-400", map[string]string{"failed": fmt.Sprintf("sdk.VerifyMessage failed err:%s", err)})
@@ -133,6 +140,7 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 	}
 
 	if camp := game.DecideCamp(msg.Message); camp != game.Empty && r.game != nil {
+		r.game.StartRound(player.Name) //start by first people
 		if err := r.db.Player.AddVote(&model.PlayerVote{
 			GameID:   r.game.GetGameID(),
 			PlayerID: msg.PlayerID,
