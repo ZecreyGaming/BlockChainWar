@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, sdkClient 
 		cfg: cfg,
 	}
 	r.ctx, r.tickerCancel = context.WithCancel(context.Background())
-	r.game = NewGame(r.ctx, cfg, db, sdkClient, r.onGameStart, r.onGameStop, r.onCampVotesChange)
+	r.game = NewGame(r.ctx, cfg, db, sdkClient, r.onGameStart, r.onGameStop, r.onCampVotesChange, r.onUpdate)
 	app.Register(r,
 		component.WithName(config.GameRoomName),
 		component.WithNameFunc(strings.ToLower),
@@ -63,7 +64,10 @@ func (r *Room) AfterInit() {
 			default:
 				s := <-stateChan
 				<-ticker
-				r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, config.GameRoomName, "onUpdate", GameUpdate{Data: s})
+				err := r.app.GroupBroadcast(context.Background(), r.cfg.FrontendType, config.GameRoomName, "onUpdate", GameUpdate{Data: s})
+				if err != nil {
+					zap.L().Error("broadcast onUpdate failed", zap.Error(err))
+				}
 			}
 		}
 	}()
@@ -106,7 +110,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 
 	// new user join group
 	r.app.GroupAddMember(ctx, config.GameRoomName, s.UID()) // add session to group
-
+	//todo 发游戏状态
 	// notify others
 	r.onJoin(ctx, false)
 
@@ -144,7 +148,9 @@ func (r *Room) onGameStart(ctx context.Context) {
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStart", info)
 	r.onJoin(ctx, true)
 }
-
+func (r *Room) onUpdate(s []byte) {
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onUpdate", GameUpdate{Data: s})
+}
 func (r *Room) onGameStop(ctx context.Context) {
 	stop := r.game.GetGameStop()
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", stop)

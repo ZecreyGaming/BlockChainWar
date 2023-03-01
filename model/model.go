@@ -21,6 +21,7 @@ type PlayerVote struct {
 	GameID   uint   `gorm:"primarykey;autoIncrement:false" json:"game_id"`
 	PlayerID uint64 `gorm:"primarykey;autoIncrement:false" json:"player_id"`
 	Camp     uint8  `gorm:"index" json:"camp"`
+	//Success  uint   `json:"success"`
 }
 
 type Camp struct {

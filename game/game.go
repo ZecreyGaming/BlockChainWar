@@ -45,6 +45,7 @@ type Game struct {
 	onGameStart       func(context.Context)
 	onGameStop        func(context.Context)
 	onCampVotesChange func(camp Camp, votes int32)
+	onUpdate          func(s []byte)
 
 	res *res
 
@@ -66,7 +67,7 @@ type Game struct {
 	toRewardName string
 }
 
-func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *zecreyface.Client, onGameStart func(context.Context), onGameStop func(context.Context), onCampVotesChange func(camp Camp, votes int32)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *zecreyface.Client, onGameStart func(context.Context), onGameStop func(context.Context), onCampVotesChange func(camp Camp, votes int32), onUpdate func(s []byte)) *Game {
 	v := &Game{
 		ctx:               ctx,
 		db:                db,
@@ -78,6 +79,7 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *
 		onGameStart:       onGameStart,
 		onGameStop:        onGameStop,
 		onCampVotesChange: onCampVotesChange,
+		onUpdate:          onUpdate,
 		GameStatus:        GameNotStarted,
 		stopSignalChan:    make(chan chan struct{}, 1),
 		nextRoundChan:     make(chan struct{}, 1),
@@ -138,22 +140,27 @@ func (g *Game) start() <-chan []byte {
 	//g.stopSignalChan <- g.nextRoundChan
 	//now start
 	g.GameStatus = GameNotStarted
+	g.Reset()
+	gameTime := time.NewTimer(time.Duration(g.cfg.GameDuration) * time.Second)
+	gameTime.Stop()
 	stateChan := make(chan []byte)
 	go func() {
-		gameTime := time.NewTimer(time.Duration(g.cfg.GameDuration) * time.Second)
 		for {
 			s, _ := g.Serialize()
-			g.Update()
+			if g.GameStatus == GameRunning {
+				g.Update()
+			}
 			select {
 			case <-g.nextRoundChan:
 				gameTime.Reset(time.Duration(g.cfg.GameDuration) * time.Second)
 			case <-g.ctx.Done():
 				return
 			case <-gameTime.C:
+				gameTime.Stop()
 				g.endRound() //game ending
-
 			default:
 				stateChan <- s
+				//g.onUpdate(s)
 			}
 		}
 	}()
@@ -178,13 +185,13 @@ func (g *Game) endRound() {
 	zap.L().Debug(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset.CollectionId))
 	// wait game to start
 	//<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
-	//g.Reset()
+	g.Reset()
 	//
-	//// g.AddPlayer(11111, BTC)
-	//// g.AddPlayer(22222, ETH)
-	//// g.AddPlayer(33333, BNB)
-	//// g.AddPlayer(44444, AVAX)
-	//// g.AddPlayer(55555, MATIC)
+	//g.AddPlayer(11111, BTC)
+	//g.AddPlayer(22222, ETH)
+	//g.AddPlayer(33333, BNB)
+	//g.AddPlayer(44444, AVAX)
+	//g.AddPlayer(55555, MATIC)
 	//
 	//g.onGameStart(g.ctx)
 	//g.nextRoundChan <- struct{}{}
@@ -192,6 +199,7 @@ func (g *Game) endRound() {
 
 func (g *Game) StartRound(toRewardName string) {
 	if g.GameStatus == GameStopped || g.GameStatus == GameNotStarted {
+		g.GameStatus = GameRunning
 		g.Reset()
 		g.toRewardName = toRewardName
 
@@ -201,7 +209,7 @@ func (g *Game) StartRound(toRewardName string) {
 		// g.AddPlayer(44444, AVAX)
 		// g.AddPlayer(55555, MATIC)
 
-		g.onGameStart(g.ctx)
+		g.onGameStart(g.ctx) //发送消息
 		g.nextRoundChan <- struct{}{}
 	}
 }
@@ -299,9 +307,11 @@ func (g *Game) Reset() {
 	g.Items = sync.Map{}
 	g.frameNumber = 0
 	g.initMap()
-	g.initGameInfo()
+	if g.GameStatus == GameRunning {
+		g.initGameInfo()
+	}
 	g.resetRes()
-	g.GameStatus = GameRunning
+	//g.GameStatus = GameRunning
 }
 
 func (g *Game) Update() {
