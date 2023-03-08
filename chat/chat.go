@@ -60,7 +60,7 @@ type NewUser struct {
 	Content string `json:"content"`
 }
 
-// Join room
+// Join room 玩家进入游戏
 func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, error) {
 	fmt.Println(fmt.Sprintf("Join player%v", player))
 	s := r.app.GetSessionFromCtx(ctx)
@@ -133,22 +133,6 @@ func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageRespons
 		zap.L().Error("get player failed", zap.Error(err))
 		return nil, pitaya.Error(err, "RH-400", map[string]string{"failed": "get player, playerID not found"})
 	}
-
-	//s := r.app.GetSessionFromCtx(ctx)
-	//fakeUID := s.ID()                             // just use s.ID as uid !!!
-	//err = s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
-	//if err != nil && !strings.Contains(err.Error(), constants.ErrSessionAlreadyBound.Error()) {
-	//	return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "bind"})
-	//}
-	//// new user join group
-	//err = r.app.GroupAddMember(ctx, config.ChatRoomName, s.UID()) // add session to group
-	//if err != nil && !strings.Contains(err.Error(), constants.ErrMemberAlreadyExists.Error()) {
-	//	return nil, pitaya.Error(err, "RH-000", map[string]string{"failed": "GroupAddMember"})
-	//}
-	//// on session close, remove it from group
-	//s.OnClose(func() {
-	//	r.app.GroupRemoveMember(ctx, config.ChatRoomName, s.UID())
-	//})
 
 	msg.Player = p
 	err = r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.ChatRoomName, "onMessage", msg)

@@ -31,7 +31,7 @@ func (m *Map) H() float64 {
 }
 
 func (m *Map) Serialize() []byte {
-	l := len(m.Cells) * sizeOfCellStateBits / 8
+	l := len(m.Cells) * sizeOfCellStateBits / 8 //8v 16个字节
 	res := make([]byte, l)
 	offset := 0
 	for i := 0; i < len(m.Cells); i += 2 {

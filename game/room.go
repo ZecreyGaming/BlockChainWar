@@ -2,8 +2,10 @@ package game
 
 import (
 	"context"
+	"fmt"
 	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"go.uber.org/zap"
+
 	"strconv"
 	"strings"
 	"time"
@@ -42,7 +44,7 @@ func RegistRoom(app pitaya.Pitaya, db *db.Client, cfg *config.Config, sdkClient 
 		cfg: cfg,
 	}
 	r.ctx, r.tickerCancel = context.WithCancel(context.Background())
-	r.game = NewGame(r.ctx, cfg, db, sdkClient, r.onGameStart, r.onGameStop, r.onCampVotesChange, r.onUpdate)
+	r.game = NewGame(r.ctx, cfg, db, sdkClient, r.onGameStart, r.onGameStop, r.onCampVotesChange)
 	app.Register(r,
 		component.WithName(config.GameRoomName),
 		component.WithNameFunc(strings.ToLower),
@@ -79,8 +81,10 @@ func (r *Room) Shutdown() {
 
 // JoinResponse represents the result of joining room
 type JoinResponse struct {
-	Code   int    `json:"code"`
-	Result string `json:"result"`
+	Code       int    `json:"code"`
+	Result     string `json:"result"`
+	GameStatus uint8  `json:"game_status"`
+	Winner     uint8  `json:"winner"`
 }
 
 // NewUser message will be received when new user join room
@@ -118,10 +122,12 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 	s.OnClose(func() {
 		r.app.GroupRemoveMember(ctx, config.GameRoomName, s.UID())
 	})
-
-	return &JoinResponse{Result: "success"}, nil
+	gameInfo, err := r.game.GetGameInfo()
+	fmt.Println("gameInfo === ", JoinResponse{Result: "success", Code: 0, GameStatus: uint8(gameInfo.GameStatus), Winner: gameInfo.WinnerId})
+	return &JoinResponse{Result: "success", Code: 0, GameStatus: uint8(gameInfo.GameStatus), Winner: gameInfo.WinnerId}, nil //code == 0 join game
 }
 
+// onJoin room
 func (r *Room) onJoin(ctx context.Context, replay bool) {
 	mi := MapInfo{
 		Row:        mapRow,
@@ -145,14 +151,25 @@ func (r *Room) onJoin(ctx context.Context, replay bool) {
 
 func (r *Room) onGameStart(ctx context.Context) {
 	info, _ := r.game.GetGameInfo()
-	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStart", info)
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStart", info)
 	r.onJoin(ctx, true)
 }
+
+// getGameInfo room
+func (r *Room) getGameInfo(ctx context.Context, msg []byte) (*JoinResponse, error) {
+	info, _ := r.game.GetGameInfo()
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "getGameInfo", info)
+	r.onJoin(ctx, true)
+	return &JoinResponse{Result: "success", Code: 0}, nil //code == 0 join game
+}
+
 func (r *Room) onUpdate(s []byte) {
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onUpdate", GameUpdate{Data: s})
 }
+
 func (r *Room) onGameStop(ctx context.Context) {
 	stop := r.game.GetGameStop()
+	fmt.Println("winner info ", stop)
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", stop)
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", stop)
 }

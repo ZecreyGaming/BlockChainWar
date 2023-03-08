@@ -41,7 +41,7 @@ func Rect(x1, y1, x2, y2 int) {
 func TestGame(t *testing.T) {
 	cfg := config.Read("../config/local.json")
 	d := db.NewClient(cfg.Database)
-	g := NewGame(context.Background(), cfg, d, func(winner Camp) {}, func(camp Camp, votes int32) {})
+	g := NewGame(context.Background(), cfg, d, func(context.Context) {}, func(context.Context) {}, func(camp Camp, votes int32) {})
 
 	new_png_file := "draw.png" // output image will live here
 

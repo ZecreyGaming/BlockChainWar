@@ -9,6 +9,8 @@ type GameInfo struct {
 	CampVotes      map[Camp]int32  `json:"camp_votes"`
 	CampRank       []model.Camp    `json:"camp_rank"`
 	PlayerRank     []model.Player  `json:"player_rank"`
+	WinnerId       uint8           `json:"winner_id"`
+	GameStatus     GameStatus      `json:"game_status"` //0 1 2 : 没开始，进行中，已结束
 }
 
 func (g *Game) GetGameInfo() (GameInfo, error) {
@@ -45,6 +47,9 @@ func (g *Game) GetGameInfo() (GameInfo, error) {
 	if err != nil {
 		return v, err
 	}
+	v.GameStatus = g.GameStatus
+	winnerId, _ := g.GetLastWinner()
+	v.WinnerId = winnerId
 	return v, nil
 }
 
@@ -57,9 +62,9 @@ type GameStop struct {
 }
 
 func (g *Game) GetGameStop() GameStop {
-	winner, _ := g.GetWinner()
+	winner, _ := g.GetLastWinner()
 	v := GameStop{
-		Winner:        winner,
+		Winner:        Camp(winner),
 		WinnerVotes:   g.db.Player.GetWinnerVotes(g.dbGame.ID, uint8(winner)),
 		NextCountDown: int64(g.cfg.GameRoundInterval),
 	}

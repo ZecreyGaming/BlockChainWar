@@ -28,10 +28,12 @@ type Player struct {
 	playerObj *resolv.Object
 }
 
-// ID 8 byte
-// R 2 byte
-// X 8 byte
-// Y 8 byte
+/*Serialize
+ID 8 byte
+R 2 byte
+X 8 byte
+Y 8 byte
+*/
 func (p *Player) Serialize() []byte {
 	bytesBuffer := bytes.NewBuffer(make([]byte, 0))
 	binary.Write(bytesBuffer, binary.BigEndian, p.ID)

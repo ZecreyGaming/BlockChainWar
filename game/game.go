@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
+	"gorm.io/gorm"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,6 +24,11 @@ import (
 type GameStatus int
 
 const (
+	GameNotStarted GameStatus = iota
+	GameRunning
+	GameStopped
+)
+const (
 	CellTag           = "CELL"
 	EdgeTag           = "EDGE"
 	HorizontalEdgeTag = "HORIZONTAL"
@@ -32,10 +38,6 @@ const (
 	edgeWidth   = minCellSize + lineWidth
 
 	playerInitialVelocity = 1
-
-	GameNotStarted GameStatus = iota
-	GameRunning
-	GameStopped
 )
 
 type Game struct {
@@ -45,7 +47,6 @@ type Game struct {
 	onGameStart       func(context.Context)
 	onGameStop        func(context.Context)
 	onCampVotesChange func(camp Camp, votes int32)
-	onUpdate          func(s []byte)
 
 	res *res
 
@@ -67,7 +68,11 @@ type Game struct {
 	toRewardName string
 }
 
-func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *zecreyface.Client, onGameStart func(context.Context), onGameStop func(context.Context), onCampVotesChange func(camp Camp, votes int32), onUpdate func(s []byte)) *Game {
+func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *zecreyface.Client,
+	onGameStart func(context.Context),
+	onGameStop func(context.Context),
+	onCampVotesChange func(camp Camp, votes int32)) *Game {
+
 	v := &Game{
 		ctx:               ctx,
 		db:                db,
@@ -79,7 +84,6 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *
 		onGameStart:       onGameStart,
 		onGameStop:        onGameStop,
 		onCampVotesChange: onCampVotesChange,
-		onUpdate:          onUpdate,
 		GameStatus:        GameNotStarted,
 		stopSignalChan:    make(chan chan struct{}, 1),
 		nextRoundChan:     make(chan struct{}, 1),
@@ -88,8 +92,8 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *
 	zap.L().Debug("game init")
 
 	v.initMap()
-	//v.initGameInfo()
 	v.resetRes()
+	//v.Reset()
 
 	//v.AddPlayer(11111, BTC)
 	//v.AddPlayer(22222, ETH)
@@ -101,22 +105,27 @@ func NewGame(ctx context.Context, cfg *config.Config, db *db.Client, sdkClient *
 }
 
 func (g *Game) initMap() {
-	g.Map = NewMap()
+	_map := NewMap()
+	_space := &resolv.Space{}
 
-	g.space = resolv.NewSpace(int(g.Map.W())+2*edgeWidth, int(g.Map.H())+2*edgeWidth, edgeWidth, edgeWidth)
-	g.space.Add(resolv.NewObject(0, 0, g.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
-	g.space.Add(resolv.NewObject(0, edgeWidth, edgeWidth, g.Map.W()+edgeWidth, EdgeTag, VerticalEdgeTag))
-	g.space.Add(resolv.NewObject(g.Map.W()+edgeWidth, 0, edgeWidth, g.Map.H()+edgeWidth, EdgeTag, VerticalEdgeTag))
-	g.space.Add(resolv.NewObject(edgeWidth, g.Map.H()+edgeWidth, g.Map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
+	_space = resolv.NewSpace(int(_map.W())+2*edgeWidth, int(_map.H())+2*edgeWidth, edgeWidth, edgeWidth)
+	_space.Add(resolv.NewObject(0, 0, _map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
+	_space.Add(resolv.NewObject(0, edgeWidth, edgeWidth, _map.W()+edgeWidth, EdgeTag, VerticalEdgeTag))
+	_space.Add(resolv.NewObject(_map.W()+edgeWidth, 0, edgeWidth, _map.H()+edgeWidth, EdgeTag, VerticalEdgeTag))
+	_space.Add(resolv.NewObject(edgeWidth, _map.H()+edgeWidth, _map.W()+edgeWidth, edgeWidth, EdgeTag, HorizontalEdgeTag))
 
 	for y := 0; y < mapRow; y++ {
 		for x := 0; x < mapColumn; x++ {
 			camp := initCamp(x, y)
 			ox, oy := cellIndexToSpaceXY(x, y)
-			g.space.Add(resolv.NewObject(ox, oy, float64(cellWidth), float64(cellHeight), CampTagMap[camp], CellTag, CellIndexToTag(x, y)))
-			g.Map.Cells = append(g.Map.Cells, camp)
+			_space.Add(resolv.NewObject(ox, oy, float64(cellWidth), float64(cellHeight), CampTagMap[camp], CellTag, CellIndexToTag(x, y)))
+			_map.Cells = append(_map.Cells, camp)
 		}
 	}
+
+	g.Map = _map
+	g.space = _space
+	fmt.Println("=== _map.Cells === :", len(_map.Cells))
 }
 
 func (g *Game) initGameInfo() {
@@ -139,17 +148,17 @@ func (g *Game) start() <-chan []byte {
 	//wait for the first people enter,and then call the "StartRound" method
 	//g.stopSignalChan <- g.nextRoundChan
 	//now start
-	g.GameStatus = GameNotStarted
 	g.Reset()
 	gameTime := time.NewTimer(time.Duration(g.cfg.GameDuration) * time.Second)
 	gameTime.Stop()
 	stateChan := make(chan []byte)
 	go func() {
 		for {
-			s, _ := g.Serialize()
+
 			if g.GameStatus == GameRunning {
 				g.Update()
 			}
+			s, _ := g.Serialize()
 			select {
 			case <-g.nextRoundChan:
 				gameTime.Reset(time.Duration(g.cfg.GameDuration) * time.Second)
@@ -160,7 +169,6 @@ func (g *Game) start() <-chan []byte {
 				g.endRound() //game ending
 			default:
 				stateChan <- s
-				//g.onUpdate(s)
 			}
 		}
 	}()
@@ -175,14 +183,14 @@ func (g *Game) endRound() {
 	g.GameStatus = GameStopped
 	//g.stopSignalChan <- g.nextRoundChan
 	g.onGameStop(g.ctx)
-	nftInfo, err := g.sdkClient.MintNft(g.cfg.CollectionId, g.toRewardName,
-		fmt.Sprintf("%s%d", g.cfg.NftPrefix, time.Now().UnixMilli()),
-		fmt.Sprintf("zecrey MintNft %d", time.Now().UnixMilli()))
-	if err != nil {
-		zap.L().Error("MintNft", zap.Error(err))
-	}
-	fmt.Println(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset))
-	zap.L().Debug(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset.CollectionId))
+	//nftInfo, err := g.sdkClient.MintNft(g.cfg.CollectionId, g.toRewardName,
+	//	fmt.Sprintf("%s%d", g.cfg.NftPrefix, time.Now().UnixMilli()),
+	//	fmt.Sprintf("zecrey MintNft %d", time.Now().UnixMilli()))
+	//if err != nil {
+	//	zap.L().Error("MintNft", zap.Error(err))
+	//}
+	//fmt.Println(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset))
+	//zap.L().Debug(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset.CollectionId))
 	// wait game to start
 	//<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
 	g.Reset()
@@ -199,17 +207,16 @@ func (g *Game) endRound() {
 
 func (g *Game) StartRound(toRewardName string) {
 	if g.GameStatus == GameStopped || g.GameStatus == GameNotStarted {
-		g.GameStatus = GameRunning
 		g.Reset()
 		g.toRewardName = toRewardName
-
+		g.GameStatus = GameRunning
 		// g.AddPlayer(11111, BTC)
 		// g.AddPlayer(22222, ETH)
 		// g.AddPlayer(33333, BNB)
 		// g.AddPlayer(44444, AVAX)
 		// g.AddPlayer(55555, MATIC)
-
-		g.onGameStart(g.ctx) //发送消息
+		g.initGameInfo()
+		g.onGameStart(g.ctx) //game start
 		g.nextRoundChan <- struct{}{}
 	}
 }
@@ -300,18 +307,25 @@ func (g *Game) GetWinner() (Camp, int) {
 	g.res = &res{winner: winner, score: maxScore}
 	return winner, maxScore
 }
-
+func (g *Game) GetLastWinner() (uint8, error) {
+	last, err := g.db.Game.GetLastWinner()
+	if err != nil {
+		zap.L().Error("failed to create game", zap.Error(err))
+		if err == gorm.ErrRecordNotFound {
+			return uint8(MATIC), nil
+		}
+		return uint8(MATIC), err
+	}
+	return last.WinnerID, nil
+}
 func (g *Game) Reset() {
 	g.Players = sync.Map{}
 	g.campVotes = sync.Map{}
 	g.Items = sync.Map{}
 	g.frameNumber = 0
-	g.initMap()
-	if g.GameStatus == GameRunning {
-		g.initGameInfo()
-	}
 	g.resetRes()
-	//g.GameStatus = GameRunning
+	g.initMap()
+	g.GameStatus = GameNotStarted
 }
 
 func (g *Game) Update() {
@@ -359,7 +373,11 @@ func (g *Game) Update() {
 					remainX -= dx
 					remainY -= dy
 				}
-				// fmt.Println("#inner camp:", CampTagMap[player.Camp], "x:", player.playerObj.X, "y:", player.playerObj.Y, "dx:", dx, "dy:", dy, "vx:", player.Vx, "vy:", player.Vy, "rx:", remainX, "ry:", remainY)
+				fmt.Println("#inner camp:", CampTagMap[player.Camp],
+					"x:", player.playerObj.X, "y:", player.playerObj.Y,
+					"dx:", dx, "dy:", dy,
+					"vx:", player.Vx, "vy:", player.Vy,
+					"rx:", remainX, "ry:", remainY)
 				player.playerObj.X += dx
 				player.playerObj.Y += dy
 				player.playerObj.Update()

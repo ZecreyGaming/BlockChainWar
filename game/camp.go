@@ -6,8 +6,8 @@ import (
 
 const (
 	sizeOfCellStateBits = 4
-	campMaskLeft        = byte(0xF0)
-	campMaskRight       = byte(0x0F)
+	campMaskLeft        = byte(0xF0) //11110000
+	campMaskRight       = byte(0x0F) //1111
 )
 
 type Camp uint8 // should convert to int4 when transfered to client
@@ -86,6 +86,7 @@ func removeCampTags(tags []string) []string {
 	return ret
 }
 
+//初始化阵营十字位置
 func initCamp(x, y int) Camp {
 	camp := Empty
 	for c := range CampTagMap {
@@ -101,6 +102,7 @@ func initCamp(x, y int) Camp {
 	return camp
 }
 
+//阵营中心位置
 func (c Camp) CenterCellIndex(row, col int) (int, int) {
 	switch c {
 	case ETH:
