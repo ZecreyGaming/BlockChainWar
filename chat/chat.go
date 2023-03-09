@@ -62,7 +62,7 @@ type NewUser struct {
 
 // Join room 玩家进入游戏
 func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, error) {
-	fmt.Println(fmt.Sprintf("Join player%v", player))
+	//fmt.Println(fmt.Sprintf("Join player%v", player))
 	s := r.app.GetSessionFromCtx(ctx)
 	fakeUID := s.ID()                              // just use s.ID as uid !!!
 	err := s.Bind(ctx, strconv.Itoa(int(fakeUID))) // binding session uid
@@ -109,7 +109,7 @@ func (r *Room) Join(ctx context.Context, player *model.Player) (*JoinResponse, e
 
 // Message sync last message to all members
 func (r *Room) Message(ctx context.Context, msg *model.Message) (*MessageResponse, error) {
-	fmt.Println("msg:", msg.Message)
+	//fmt.Println("msg:", msg.Message)
 	err := r.db.Message.Create(msg)
 	if err != nil {
 		zap.L().Error("save message failed", zap.Error(err))

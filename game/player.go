@@ -3,7 +3,6 @@ package game
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -118,6 +117,6 @@ func (g *Game) AddPlayer(playerID uint64, camp Camp) *Player {
 	g.space.Add(player.playerObj)
 	g.Players.Store(playerID, player)
 
-	fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
+	//fmt.Println("new player, camp:", camp, "x:", player.playerObj.X, "y:", player.playerObj.Y, "vx:", player.Vx, "vy:", player.Vy)
 	return player
 }

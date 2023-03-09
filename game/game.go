@@ -125,7 +125,7 @@ func (g *Game) initMap() {
 
 	g.Map = _map
 	g.space = _space
-	fmt.Println("=== _map.Cells === :", len(_map.Cells))
+	//fmt.Println("=== _map.Cells === :", len(_map.Cells))
 }
 
 func (g *Game) initGameInfo() {
@@ -210,11 +210,11 @@ func (g *Game) StartRound(toRewardName string) {
 		g.Reset()
 		g.toRewardName = toRewardName
 		g.GameStatus = GameRunning
-		// g.AddPlayer(11111, BTC)
-		// g.AddPlayer(22222, ETH)
-		// g.AddPlayer(33333, BNB)
-		// g.AddPlayer(44444, AVAX)
-		// g.AddPlayer(55555, MATIC)
+		//g.AddPlayer(11111, BTC)
+		////g.AddPlayer(22222, ETH)
+		//g.AddPlayer(33333, BNB)
+		//g.AddPlayer(44444, AVAX)
+		//g.AddPlayer(55555, MATIC)
 		g.initGameInfo()
 		g.onGameStart(g.ctx) //game start
 		g.nextRoundChan <- struct{}{}

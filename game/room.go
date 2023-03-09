@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"fmt"
 	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"go.uber.org/zap"
 
@@ -123,7 +122,7 @@ func (r *Room) Join(ctx context.Context, msg []byte) (*JoinResponse, error) {
 		r.app.GroupRemoveMember(ctx, config.GameRoomName, s.UID())
 	})
 	gameInfo, err := r.game.GetGameInfo()
-	fmt.Println("gameInfo === ", JoinResponse{Result: "success", Code: 0, GameStatus: uint8(gameInfo.GameStatus), Winner: gameInfo.WinnerId})
+	//fmt.Println("gameInfo === ", JoinResponse{Result: "success", Code: 0, GameStatus: uint8(gameInfo.GameStatus), Winner: gameInfo.WinnerId})
 	return &JoinResponse{Result: "success", Code: 0, GameStatus: uint8(gameInfo.GameStatus), Winner: gameInfo.WinnerId}, nil //code == 0 join game
 }
 
@@ -170,7 +169,7 @@ func (r *Room) onUpdate(s []byte) {
 
 func (r *Room) onGameStop(ctx context.Context) {
 	stop := r.game.GetGameStop()
-	fmt.Println("winner info ", stop)
+	//fmt.Println("winner info ", stop)
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStop", stop)
 	r.app.GroupBroadcast(ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStop", stop)
 }
