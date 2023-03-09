@@ -373,11 +373,11 @@ func (g *Game) Update() {
 					remainX -= dx
 					remainY -= dy
 				}
-				fmt.Println("#inner camp:", CampTagMap[player.Camp],
-					"x:", player.playerObj.X, "y:", player.playerObj.Y,
-					"dx:", dx, "dy:", dy,
-					"vx:", player.Vx, "vy:", player.Vy,
-					"rx:", remainX, "ry:", remainY)
+				//fmt.Println("#inner camp:", CampTagMap[player.Camp],
+				//	"x:", player.playerObj.X, "y:", player.playerObj.Y,
+				//	"dx:", dx, "dy:", dy,
+				//	"vx:", player.Vx, "vy:", player.Vy,
+				//	"rx:", remainX, "ry:", remainY)
 				player.playerObj.X += dx
 				player.playerObj.Y += dy
 				player.playerObj.Update()

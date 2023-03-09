@@ -152,6 +152,7 @@ func (r *Room) onJoin(ctx context.Context, replay bool) {
 func (r *Room) onGameStart(ctx context.Context) {
 	info, _ := r.game.GetGameInfo()
 	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.GameRoomName, "onGameStart", info)
+	r.app.GroupBroadcast(r.ctx, r.cfg.FrontendType, config.ChatRoomName, "onGameStart", info)
 	r.onJoin(ctx, true)
 }
 
