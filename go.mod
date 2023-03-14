@@ -3,13 +3,14 @@ module github.com/COAOX/zecrey_warrior
 go 1.17
 
 require (
-	github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.11
+	github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.13
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/kvartborg/vector v0.0.0-20200419093813-2cba0cabb4f0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/solarlune/resolv v0.5.1
 	github.com/topfreegames/pitaya v1.1.10
 	github.com/topfreegames/pitaya/v2 v2.2.0
+	github.com/zecrey-labs/zecrey-legend-go-sdk v0.0.23
 	go.uber.org/zap v1.21.0
 	gorm.io/driver/postgres v1.4.5
 	gorm.io/gorm v1.24.2

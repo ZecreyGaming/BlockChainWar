@@ -4,15 +4,15 @@
     "port": 5433,
     "user": "root",
     "password": "public",
-    "database": "zecrey_warrior"
+    "database": "zecreyBlockWar"
   },
   "fps": 30,
-  "game_round_interval": 10000,
+  "game_round_interval": 0,
   "frontend_type": "zecrey_warrior",
   "item_frame_chance": 500,
-  "game_duration": 20,
-  "account_name": "alice",
+  "game_duration": 60,
+  "account_name": "amber1",
   "seed": "",
-  "nft_prefix": "zecrey",
+  "nft_prefix": "goodwei",
   "collection_id": 6
 }

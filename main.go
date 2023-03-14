@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	sdk "github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
 	"log"
 	"net/http"
@@ -22,7 +23,7 @@ import (
 )
 
 var (
-	configPath = flag.String("config", "./config/local.json", "Path to config file")
+	configPath = flag.String("config", "./config/config.json", "Path to config file")
 )
 
 func main() {
@@ -38,7 +39,13 @@ func main() {
 	defer app.Shutdown()
 
 	database := db.NewClient(cfg.Database)
-	sdkClient, err := sdk.GetClient(cfg.AccountName, cfg.Seed, cfg.NftPrefix, cfg.CollectionId)
+
+	AccountInfo, seed, err := sdk.GetAccountInfoBySeed(cfg.Seed)
+	if err != nil {
+		panic(err)
+	}
+
+	sdkClient, err := sdk.GetClient(AccountInfo.AccountName, seed, cfg.NftPrefix, cfg.CollectionId)
 	if err != nil {
 		panic(err)
 	}
@@ -53,6 +60,7 @@ func main() {
 
 	go http.ListenAndServe(":3251", nil)
 
+	fmt.Printf("Starting server at 0.0.0.0:%d...\n", 3250)
 	app.Start()
 }
 

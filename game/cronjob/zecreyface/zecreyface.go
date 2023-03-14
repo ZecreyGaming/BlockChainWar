@@ -3,6 +3,7 @@ package zecreyface
 import (
 	"fmt"
 	zecreyface "github.com/Zecrey-Labs/zecrey-marketplace-go-sdk/sdk"
+	legendSdk "github.com/zecrey-labs/zecrey-legend-go-sdk/sdk"
 )
 
 type Client struct {
@@ -76,4 +77,13 @@ func (c *Client) GetCollectionWinNfts(collectionId int64) ([]*zecreyface.HauaraN
 
 func GetAccountInfo(accountName string) (*zecreyface.RespGetAccountByAccountName, error) {
 	return zecreyface.GetAccountByAccountName(accountName)
+}
+func GetAccountInfoBySeed(privateKey string) (*legendSdk.RespGetAccountInfoByPubKey, string, error) {
+	_, seed, err := zecreyface.GetSeedAndL2Pk(privateKey)
+	if err != nil {
+		return nil, "", fmt.Errorf("GetSeedAndL2Pk err=%s", err.Error())
+	}
+	accountInfo, err := zecreyface.GetAccountInfoBySeed(seed[2:])
+
+	return accountInfo, seed[2:], err
 }
