@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
 
   zecrey_war:
-    image: zecrey/zecrey-chain-war:0.0.5
+    image: zecrey/zecrey-chain-war:0.0.6
     hostname: block-chain-war
     container_name: block-chain-war
     ports:
