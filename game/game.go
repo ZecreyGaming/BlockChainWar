@@ -183,13 +183,13 @@ func (g *Game) endRound() {
 	g.GameStatus = GameStopped
 	//g.stopSignalChan <- g.nextRoundChan
 	g.onGameStop(g.ctx)
-	//nftInfo, err := g.sdkClient.MintNft(g.cfg.CollectionId, g.toRewardName,
-	//	fmt.Sprintf("%s%d", g.cfg.NftPrefix, time.Now().UnixMilli()),
-	//	fmt.Sprintf("zecrey MintNft %d", time.Now().UnixMilli()))
-	//if err != nil {
-	//	zap.L().Error("MintNft", zap.Error(err))
-	//}
-	//fmt.Println(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset))
+	nftInfo, err := g.sdkClient.MintNft(g.cfg.CollectionId, g.toRewardName,
+		fmt.Sprintf("%s%d", g.cfg.NftPrefix, time.Now().UnixMilli()),
+		fmt.Sprintf("zecrey MintNft %d", time.Now().UnixMilli()))
+	if err != nil {
+		zap.L().Error("MintNft", zap.Error(err))
+	}
+	fmt.Println(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset))
 	//zap.L().Debug(fmt.Sprintf("MintNft success id:%v", nftInfo.Asset.CollectionId))
 	// wait game to start
 	//<-time.After(time.Duration(g.cfg.GameRoundInterval) * time.Second)
