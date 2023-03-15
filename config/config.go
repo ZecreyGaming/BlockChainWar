@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/ZecreyGaming/BlockChainWar/db"
 )
 
 const (

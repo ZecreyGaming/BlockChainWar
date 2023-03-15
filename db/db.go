@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/COAOX/zecrey_warrior/model"
+	"github.com/ZecreyGaming/BlockChainWar/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

@@ -3,25 +3,25 @@ version: '3.9'
 services:
   postgres:
     image: postgres:13.4-alpine3.14
-    hostname: zecrey-chain-war-postgres
-    container_name: zecrey-chain-war-postgres
+    hostname: block-chain-war-postgres
+    container_name: block-chain-war-postgres
     ports:
       - "5433:5432"
     environment:
       - POSTGRES_PASSWORD=public
-      - POSTGRES_DB=chain_block_war
+      - POSTGRES_DB=block_chain_war
       - POSTGRES_USER=root
     restart: unless-stopped
 
   zecrey_war:
-    image: zecrey/zecrey-chain-war:0.0.4
-    hostname: zecrey-chain-war
-    container_name: zecrey-chain-war
+    image: zecrey/zecrey-chain-war:0.0.5
+    hostname: block-chain-war
+    container_name: block-chain-war
     ports:
       - "3250:3250"
       - "3251:3251"
     volumes:
-      - ./config/config.json:/zecrey-chain-war/config/config.json
+      - ./config/config.json:/block-chain-war/config/config.json
     depends_on:
       - postgres
     command: [ "./wait-for-it.sh", "postgres:5432", "--", "./main" ]

@@ -1,6 +1,6 @@
 package game
 
-import "github.com/COAOX/zecrey_warrior/model"
+import "github.com/ZecreyGaming/BlockChainWar/model"
 
 type GameInfo struct {
 	*model.Game

@@ -1,4 +1,4 @@
-module github.com/COAOX/zecrey_warrior
+module github.com/ZecreyGaming/BlockChainWar
 
 go 1.17
 

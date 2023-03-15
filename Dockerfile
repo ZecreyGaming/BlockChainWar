@@ -2,8 +2,8 @@
 
 FROM golang:alpine AS builder
 LABEL stage=gobuilder
-COPY . /zecrey-chain-war
-WORKDIR /zecrey-chain-war/
+COPY . /block-chain-war
+WORKDIR /block-chain-war/
 RUN chmod 777 ./wait-for-it.sh
 ENV CGO_ENABLED 0
 ENV PATH="${PATH}:${GOPATH}/bin"

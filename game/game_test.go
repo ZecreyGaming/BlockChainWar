@@ -9,8 +9,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/COAOX/zecrey_warrior/config"
-	"github.com/COAOX/zecrey_warrior/db"
+	"github.com/ZecreyGaming/BlockChainWar/config"
+	"github.com/ZecreyGaming/BlockChainWar/db"
 )
 
 var img = image.NewRGBA(image.Rect(0, 0, 852, 642))

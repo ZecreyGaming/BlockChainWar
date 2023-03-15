@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/COAOX/zecrey_warrior/model"
+	"github.com/ZecreyGaming/BlockChainWar/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

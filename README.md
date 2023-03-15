@@ -1,6 +1,6 @@
-# Chain Block War Game
+# Block Chain War Game
 
-This is an example server project of zecrey 'Chain Block War'.
+This is an example server project of zecrey 'Block Chain War'.
 
 ## Getting Started
 
@@ -9,7 +9,7 @@ If you do not have docker installed, [install docker](https://dockerdocs.cn/desk
 Clone the repo and create the `config.json` file
 
 ```bash
-  cd ChainBlockWar/config/config.json.example && cp config.json.example config.json
+  cd BlockChainWar/config/config.json.example && cp config.json.example config.json
 ```
 
 Modify the `config.yaml` file to configure your information, following is an example:
@@ -21,11 +21,11 @@ Modify the `config.yaml` file to configure your information, following is an exa
         "port": 5432,
         "user": "root",
         "password": "public",
-        "database": "chain_block_war"
+        "database": "block_chain_war"
       },                              
       "fps": 30,
       "game_round_interval": 0,
-      "frontend_type": "chain_block_war",
+      "frontend_type": "block_chain_war",
       "item_frame_chance": 500,
       "game_duration": 60,              //Duration of a game (s)
       "seed": "<private_key_from_metamask>",
@@ -53,34 +53,36 @@ Example result:
  #{"data":{"collection":[{"id":5}]}}
 ```
 
-We use docker-compose to start the service. Please refer to [here](https://docs.docker.com/compose/install/) for docker-compose installation
+We use docker-compose to start the service. Please refer to [here](https://docs.docker.com/compose/install/) for
+docker-compose installation
 
 docker-compose.yaml analysis:
+
 ```bash
 version: '3.9'
 
 services:
   postgres:
     image: postgres:13.4-alpine3.14
-    hostname: zecrey-chain-war-postgres
-    container_name: zecrey-chain-war-postgres
+    hostname: block-chain-war-postgres
+    container_name: block-chain-war-postgres
     ports:
       - "5433:5432"
     environment:
       - POSTGRES_PASSWORD=public
-      - POSTGRES_DB=chain_block_war
+      - POSTGRES_DB=block_chain_war
       - POSTGRES_USER=root
     restart: unless-stopped
 
   zecrey_war:
-    image: zecrey/zecrey-chain-war:0.0.4
-    hostname: zecrey-chain-war
-    container_name: zecrey-chain-war
+    image: zecrey/zecrey-chain-war:0.0.5
+    hostname: block-chain-war
+    container_name: block-chain-war
     ports:
       - "3250:3250"
       - "3251:3251"
     volumes:
-      - ./config/config.json:/zecrey-chain-war/config/config.json    
+      - ./config/config.json:/block-chain-war/config/config.json    
       //We want to use our own configuration, so please check whether the configuration in database in 'config. json' 
         is consistent with the configuration in 'postgres' under' services: '
     depends_on:

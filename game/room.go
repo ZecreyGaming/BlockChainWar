@@ -2,16 +2,16 @@ package game
 
 import (
 	"context"
-	"github.com/COAOX/zecrey_warrior/game/cronjob/zecreyface"
+	"github.com/ZecreyGaming/BlockChainWar/game/cronjob/zecreyface"
 	"go.uber.org/zap"
 
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/COAOX/zecrey_warrior/config"
-	"github.com/COAOX/zecrey_warrior/db"
-	"github.com/COAOX/zecrey_warrior/model"
+	"github.com/ZecreyGaming/BlockChainWar/config"
+	"github.com/ZecreyGaming/BlockChainWar/db"
+	"github.com/ZecreyGaming/BlockChainWar/model"
 	"github.com/topfreegames/pitaya/constants"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
