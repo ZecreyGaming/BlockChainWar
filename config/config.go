@@ -19,7 +19,6 @@ type Config struct {
 	FrontendType      string    `json:"frontend_type"`
 	ItemFrameChance   int       `json:"item_frame_chance"`
 	GameDuration      int       `json:"game_duration"`
-	AccountName       string    `json:"account_name"`
 	Seed              string    `json:"seed"`
 	NftPrefix         string    `json:"nft_prefix"`
 	CollectionId      int64     `json:"collection_id"`

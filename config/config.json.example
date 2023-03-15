@@ -1,18 +1,17 @@
 {
   "database": {
-    "host": "localhost",
-    "port": 5433,
+    "host": "postgres",
+    "port": 5432,
     "user": "root",
     "password": "public",
-    "database": "zecreyBlockWar"
+    "database": "zecrey_chain_war"
   },
   "fps": 30,
   "game_round_interval": 0,
   "frontend_type": "zecrey_warrior",
   "item_frame_chance": 500,
   "game_duration": 60,
-  "account_name": "amber1",
-  "seed": "",
-  "nft_prefix": "goodwei",
+  "seed": "<private_key_from_metamask>",
+  "nft_prefix": "companyName",
   "collection_id": 6
 }

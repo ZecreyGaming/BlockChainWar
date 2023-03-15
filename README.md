@@ -1,40 +1,37 @@
-# Zecrey Block war
+# Zecrey chain Block war game
 
-This is an example server project of Zecrey Block war.
+This is an example server project of zecrey chain block war.
 
 ## Getting Started
 
 If you do not have docker installed, [install docker](https://dockerdocs.cn/desktop/#download-and-install).
 
-Clone the repo and create the `config.yaml` file
+Clone the repo and create the `config.json` file
 
 ```bash
-  cd ZecreyBlockWar/game/api/server/etc/ && cp config.yaml.example config.yaml
+  cd ZecreyChainBlockWar/config/config.json.example && cp config.json.example config.json
 ```
 
 Modify the `config.yaml` file to configure your information, following is an example:
 
-```json
-
-{
-  "database": {
-    "host": "localhost",
-    "port": 5433,
-    "user": "root",
-    "password": "public",
-    "database": "zecreyBlockWar"
-  },
-  "fps": 30,
-  "game_round_interval": 0,
-  "frontend_type": "zecrey_warrior",
-  "item_frame_chance": 500,
-  "game_duration": 60,
-  "account_name": "amber1",
-  "seed": "<private_key_from_metamask>",
-  "nft_prefix": "goodwei",
-  "collection_id": "<ID of the collection you created>"
-}
-
+```bash
+    {
+      "database": {                     
+        "host": "postgres",            //If you do not use docker-compose to start,please modify the host specified for you here
+        "port": 5432,
+        "user": "root",
+        "password": "public",
+        "database": "zecrey_chain_war"
+      },                              
+      "fps": 30,
+      "game_round_interval": 0,
+      "frontend_type": "zecrey_chain_war",
+      "item_frame_chance": 500,
+      "game_duration": 60,              //Duration of a game (s)
+      "seed": "<private_key_from_metamask>",
+      "nft_prefix": "companyName",
+      "collection_id": "<ID of the collection you created>"
+    }
 
 ```
 
@@ -54,6 +51,41 @@ Example result:
 
 ```bash
  #{"data":{"collection":[{"id":5}]}}
+```
+
+We use docker-compose to start the service. Please refer to [here](https://docs.docker.com/compose/install/) for docker-compose installation
+
+docker-compose.yaml analysis:
+```bash
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:13.4-alpine3.14
+    hostname: zecrey-chain-war-postgres
+    container_name: zecrey-chain-war-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=public
+      - POSTGRES_DB=zecrey_chain_war
+      - POSTGRES_USER=root
+    restart: unless-stopped
+
+  zecrey_war:
+    image: zecrey/zecrey-chain-war:0.0.4
+    hostname: zecrey-chain-war
+    container_name: zecrey-chain-war
+    ports:
+      - "3250:3250"
+      - "3251:3251"
+    volumes:
+      - ./config/config.json:/zecrey-chain-war/config/config.json    
+      //We want to use our own configuration, so please check whether the configuration in database in 'config. json' 
+        is consistent with the configuration in 'postgres' under' services: '
+    depends_on:
+      - postgres
+    command: [ "./wait-for-it.sh", "postgres:5432", "--", "./main" ]
 ```
 
 Then,run the development server:
