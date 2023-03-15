@@ -59,7 +59,7 @@ Example result:
 Then,run the development server:
 
 ```bash
-  docker run -d -p 7788:7788 -v $(pwd)/config.yaml:/app/etc/config.yaml zecrey/browser-quest:0.0.4  
+  docker-compose -f docker-compose.yaml up -d
 ```
 
 If your docker download image is stuck,
