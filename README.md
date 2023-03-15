@@ -1,6 +1,6 @@
-# Zecrey chain Block war game
+# Chain Block War Game
 
-This is an example server project of zecrey chain block war.
+This is an example server project of zecrey 'Chain Block War'.
 
 ## Getting Started
 
@@ -9,7 +9,7 @@ If you do not have docker installed, [install docker](https://dockerdocs.cn/desk
 Clone the repo and create the `config.json` file
 
 ```bash
-  cd ZecreyChainBlockWar/config/config.json.example && cp config.json.example config.json
+  cd ChainBlockWar/config/config.json.example && cp config.json.example config.json
 ```
 
 Modify the `config.yaml` file to configure your information, following is an example:
@@ -21,11 +21,11 @@ Modify the `config.yaml` file to configure your information, following is an exa
         "port": 5432,
         "user": "root",
         "password": "public",
-        "database": "zecrey_chain_war"
+        "database": "chain_block_war"
       },                              
       "fps": 30,
       "game_round_interval": 0,
-      "frontend_type": "zecrey_chain_war",
+      "frontend_type": "chain_block_war",
       "item_frame_chance": 500,
       "game_duration": 60,              //Duration of a game (s)
       "seed": "<private_key_from_metamask>",
@@ -68,7 +68,7 @@ services:
       - "5433:5432"
     environment:
       - POSTGRES_PASSWORD=public
-      - POSTGRES_DB=zecrey_chain_war
+      - POSTGRES_DB=chain_block_war
       - POSTGRES_USER=root
     restart: unless-stopped
 

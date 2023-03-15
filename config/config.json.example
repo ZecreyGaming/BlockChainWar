@@ -4,7 +4,7 @@
     "port": 5432,
     "user": "root",
     "password": "public",
-    "database": "zecrey_chain_war"
+    "database": "chain_block_war"
   },
   "fps": 30,
   "game_round_interval": 0,

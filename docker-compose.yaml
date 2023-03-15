@@ -9,7 +9,7 @@ services:
       - "5433:5432"
     environment:
       - POSTGRES_PASSWORD=public
-      - POSTGRES_DB=zecrey_chain_war
+      - POSTGRES_DB=chain_block_war
       - POSTGRES_USER=root
     restart: unless-stopped
 
