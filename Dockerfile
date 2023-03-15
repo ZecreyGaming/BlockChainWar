@@ -4,6 +4,7 @@ FROM golang:alpine AS builder
 LABEL stage=gobuilder
 COPY . /zecrey-chain-war
 WORKDIR /zecrey-chain-war/
+RUN chmod 777 ./wait-for-it.sh
 ENV CGO_ENABLED 0
 ENV PATH="${PATH}:${GOPATH}/bin"
 ENV GOPROXY https://goproxy.cn,direct
@@ -20,8 +21,3 @@ RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
 RUN git config --global url."git@github.com:zecrey-labs".insteadOf "https://github.com/zecrey-labs"
 RUN --mount=type=ssh,id=github go build -ldflags "-X main.CodeVersion=`git describe --tags` -X main.GitCommitHash=`git rev-parse --short HEAD` -linkmode=external -extldflags=-static" -o main
 ENTRYPOINT ["./main"]
-
-#FROM alpine
-#WORKDIR /zecrey-chain-war/
-#COPY --from=builder /zecrey-chain-war/main /zecrey-chain-war/
-#ENTRYPOINT ["./main"]

@@ -58,7 +58,7 @@ func main() {
 	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
 	http.Handle("/demoweb/", http.StripPrefix("/demoweb/", http.FileServer(http.Dir("demoweb"))))
 
-	go http.ListenAndServe(":3251", nil)
+	go http.ListenAndServe(":3251", nil) //http://127.0.0.1:3251/web/
 
 	fmt.Printf("Starting server at 0.0.0.0:%d...\n", 3250)
 	app.Start()

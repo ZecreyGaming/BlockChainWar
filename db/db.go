@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/COAOX/zecrey_warrior/model"
 	"gorm.io/driver/postgres"
@@ -34,8 +35,20 @@ func NewClient(cfg Config) *Client {
 	gdb, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
+
 	if err != nil {
-		panic(err)
+		for i := 0; i < 4; i++ {
+			gdb, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+				DisableForeignKeyConstraintWhenMigrating: true,
+			})
+			if err == nil {
+				break
+			}
+			time.Sleep(2 * time.Second)
+		}
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	err = gdb.AutoMigrate(&model.Message{}, &model.Game{}, &model.Player{}, &model.Camp{}, &model.PlayerVote{})
