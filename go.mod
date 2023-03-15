@@ -3,7 +3,7 @@ module github.com/ZecreyGaming/BlockChainWar
 go 1.17
 
 require (
-	github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.13
+	github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.14
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/kvartborg/vector v0.0.0-20200419093813-2cba0cabb4f0
 	github.com/sirupsen/logrus v1.8.1

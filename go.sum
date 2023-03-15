@@ -323,6 +323,8 @@ github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNu
 github.com/XiaoMi/pegasus-go-client v0.0.0-20210427083443-f3b6b08bc4c2/go.mod h1:jNIx5ykW1MroBuaTja9+VpglmaJOUzezumfhLlER3oY=
 github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.13 h1:jlX2RBRHz48hx6z8rUsqPAQKUdjqISXmdD2QL7qUo6k=
 github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.13/go.mod h1:CoProBG+PZL1CjQ9taN0b74sTsQmTMJNS7O8XKwsg4o=
+github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.14 h1:Ns900hsedfsS86YNKCj5kz4ZOkkvZwPPvTUYm9VDzPU=
+github.com/Zecrey-Labs/zecrey-marketplace-go-sdk v1.0.14/go.mod h1:CoProBG+PZL1CjQ9taN0b74sTsQmTMJNS7O8XKwsg4o=
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
 github.com/alecthomas/jsonschema v0.0.0-20180308105923-f2c93856175a/go.mod h1:qpebaTNSsyUn5rPSJMsfqEtDw71TTggXM6stUDI16HA=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

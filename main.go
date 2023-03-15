@@ -6,6 +6,7 @@ import (
 	sdk "github.com/ZecreyGaming/BlockChainWar/game/cronjob/zecreyface"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ZecreyGaming/BlockChainWar/chat"
@@ -45,7 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	sdkClient, err := sdk.GetClient(AccountInfo.AccountName, seed, cfg.NftPrefix, cfg.CollectionId)
+	sdkClient, err := sdk.GetClient(strings.TrimSuffix(AccountInfo.AccountName, ".zec"), seed, cfg.NftPrefix, cfg.CollectionId)
 	if err != nil {
 		panic(err)
 	}
