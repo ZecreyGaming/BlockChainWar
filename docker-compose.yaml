@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
 
   zecrey_war:
-    image: docker.io/zecrey/zecrey-chain-war:0.0.4
+    image: zecrey/zecrey-chain-war:0.0.4
     hostname: zecrey-chain-war
     container_name: zecrey-chain-war
     ports:
