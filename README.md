@@ -9,7 +9,7 @@ If you do not have docker installed, [install docker](https://dockerdocs.cn/desk
 Clone the repo and create the `config.json` file
 
 ```bash
-  cd BlockChainWar/config/config.json.example && cp config.json.example config.json
+  cd BlockChainWar/config/ && cp config.json.example config.json
 ```
 
 Modify the `config.yaml` file to configure your information, following is an example:
@@ -93,6 +93,7 @@ services:
 Then,run the development server:
 
 ```bash
+  cd BlockChainWar/
   docker-compose -f docker-compose.yaml up -d
 ```
 
