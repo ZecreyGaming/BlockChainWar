@@ -1,6 +1,6 @@
-# Block Chain War Game
+# Blockchain War Game
 
-This is an example server project of zecrey 'Blockchain War'.
+This is an example server project of zecrey `Blockchain War`.
 
 ## Getting Started
 
