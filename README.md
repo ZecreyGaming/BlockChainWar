@@ -42,21 +42,17 @@ You can replace `amber1.zec` in example with your name for query.
 Example:
 
 ```bash
-   curl --location 'https://hasura.zecrey.com/v1/graphql' \
+curl --location 'https://hasura.zecrey.com/v1/graphql' \
    --header 'Content-Type: application/json' \
    --data '{"query":"query MyQuery {collection(where: {account: {account_name: {_eq: \"gavinplaygameserver2.zec\"}}, l2_collection_id: {_eq: \"0\"}}) {id}}","variables":{}}'
-```
 
-Example result:
-
-```bash
- #{"data":{"collection":[{"id":5}]}}
+#{"data":{"collection":[{"id":5}]}}
 ```
 
 We use docker-compose to start the service. Please refer to [here](https://docs.docker.com/compose/install/) for
 docker-compose installation
 
-Then,run the development server:
+Finally, run the development server:
 
 ```bash
   cd BlockChainWar/
