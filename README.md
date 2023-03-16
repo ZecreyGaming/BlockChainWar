@@ -14,7 +14,7 @@ Clone the repo and create the `config.json` file
 
 Modify the `config.yaml` file to configure your information, following is an example:
 
-```bash
+```json
     {
       "database": {                     
         "host": "postgres",            //If you do not use docker-compose to start,please modify the host specified for you here
