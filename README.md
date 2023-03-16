@@ -28,16 +28,16 @@ Modify the `config.yaml` file to configure your information, following is an exa
       "frontend_type": "block_chain_war",
       "item_frame_chance": 500,
       "game_duration": 60,              //Duration of a game (s)
-      "seed": "<private_key_from_metamask>",
+      "seed": "<private_key_from_wallet>",
       "nft_prefix": "companyName",
-      "collection_id": "<ID of the collection you created>"
+      "collection_id": "<collection_id>"
     }
 
 ```
 
 Each account has a collection created by default. You can query through this example curl
 
-You can replace `amber1.zec` in example with your name for query.
+You can replace your own name with `.zec` suffix in example with your name for query.
 
 Example:
 
